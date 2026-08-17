@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-display: var(--font-archivo);
+  --font-sans: var(--font-inter);
+
+  --color-ink: #0a0a0b;
+  --color-ink-soft: #141416;
+  --color-ink-elevated: #1b1b1e;
+  --color-line: rgba(255, 255, 255, 0.1);
+  --color-line-soft: rgba(255, 255, 255, 0.06);
+  --color-paper: #faf9f6;
+  --color-paper-soft: #f1f0ec;
+  --color-muted: #9a9a9f;
+  --color-muted-onlight: #6b6b6f;
+
+  --color-gold: #f4b400;
+  --color-gold-ink: #1a1200;
+
+  --color-bigdrip: #e4342f;
+  --color-bigdrip-soft: rgba(228, 52, 47, 0.12);
+  --color-ag20: #2f6fef;
+  --color-ag20-soft: rgba(47, 111, 239, 0.12);
+  --color-elmayana: #1fb558;
+  --color-elmayana-soft: rgba(31, 181, 88, 0.14);
+
+  --animate-marquee: marquee 32s linear infinite;
+  --animate-pulse-slow: pulse-slow 3s ease-in-out infinite;
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @keyframes pulse-slow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: var(--color-gold);
+  color: var(--color-gold-ink);
+}
+
+* {
+  border-color: var(--color-line);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.tracking-tightest {
+  letter-spacing: -0.04em;
+}
+
+.text-stroke {
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* subtle grain texture used on dark hero/band sections */
+.bg-grain {
+  position: relative;
+}
+.bg-grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+}
