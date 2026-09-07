@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu, X, Search, ChevronDown } from "lucide-react";
+import { Menu, X, Search, ChevronDown, User } from "lucide-react";
 import clsx from "clsx";
 import AnnouncementBar from "./AnnouncementBar";
 import BaeMark from "@/components/brand/BaeMark";
@@ -12,8 +12,9 @@ import Button from "@/components/ui/Button";
 import { NAV_LINKS } from "@/lib/nav";
 import { LABELS } from "@/lib/data";
 import { LABEL_CLASSES } from "@/lib/labelStyle";
+import { SafeUser } from "@/lib/db/schema";
 
-export default function Header() {
+export default function Header({ user }: { user: SafeUser | null }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [labelsOpen, setLabelsOpen] = useState(false);
@@ -34,6 +35,13 @@ export default function Header() {
       document.body.style.overflow = "";
     };
   }, [mobileOpen]);
+
+  const isStandaloneRoute =
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/signup") ||
+    pathname.startsWith("/verify");
+  if (isStandaloneRoute) return null;
 
   return (
     <div className="sticky top-0 z-50">
@@ -142,6 +150,14 @@ export default function Header() {
               Get Tickets
             </Button>
 
+            <Link
+              href={user ? (user.role === "admin" ? "/admin" : "/account") : "/login"}
+              className="ml-1 hidden items-center gap-1.5 px-2 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-paper transition-colors hover:text-gold sm:flex"
+            >
+              <User className="size-4" />
+              {user ? (user.role === "admin" ? "Admin" : "Account") : "Sign In"}
+            </Link>
+
             <button
               onClick={() => setMobileOpen(true)}
               aria-label="Open menu"
@@ -199,7 +215,14 @@ export default function Header() {
                   </Link>
                 ))}
               </nav>
-              <div className="border-t border-line p-6">
+              <div className="border-t border-line p-6 space-y-3">
+                <Link
+                  href={user ? (user.role === "admin" ? "/admin" : "/account") : "/login"}
+                  className="flex items-center justify-center gap-1.5 border border-line py-3 text-xs font-semibold uppercase tracking-[0.1em] text-paper"
+                >
+                  <User className="size-4" />
+                  {user ? (user.role === "admin" ? "Admin Dashboard" : "My Account") : "Sign In"}
+                </Link>
                 <Button href="/tickets" variant="gold" icon="ticket" className="w-full">
                   Get Tickets
                 </Button>

@@ -1,23 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Minus, Plus, ShieldCheck, Ticket as TicketIcon, RefreshCcw, ArrowLeftRight } from "lucide-react";
+import { ArrowLeft, Minus, Plus, ShieldCheck, Ticket as TicketIcon, RefreshCcw, ArrowLeftRight, Loader2 } from "lucide-react";
 import EventCard from "@/components/cards/EventCard";
 import Placeholder from "@/components/ui/Placeholder";
-import Button from "@/components/ui/Button";
 import SectionHeading from "@/components/ui/SectionHeading";
-import { EVENTS, formatNaira } from "@/lib/data";
+import { formatNaira } from "@/lib/data";
+import { BaeEvent } from "@/lib/types";
 
-export default function TicketsClient() {
+export default function TicketsClient({ events }: { events: BaeEvent[] }) {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const upcoming = EVENTS.filter((e) => e.status === "upcoming");
+  const upcoming = events.filter((e) => e.status === "upcoming");
   const preselected = searchParams.get("event");
   const initial = upcoming.find((e) => e.id === preselected) ?? upcoming[0];
 
   const [selectedId, setSelectedId] = useState(initial?.id ?? upcoming[0]?.id);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [buyerName, setBuyerName] = useState("");
+  const [buyerEmail, setBuyerEmail] = useState("");
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   const event = upcoming.find((e) => e.id === selectedId) ?? upcoming[0];
 
@@ -47,6 +52,34 @@ export default function TicketsClient() {
   function selectEvent(id: string) {
     setSelectedId(id);
     setQuantities({});
+    setCheckoutError(null);
+  }
+
+  async function handleCheckout() {
+    if (!event || summary.count === 0) return;
+    if (!buyerName.trim() || !/^\S+@\S+\.\S+$/.test(buyerEmail)) {
+      setCheckoutError("Enter your name and a valid email so we know where to send your tickets.");
+      return;
+    }
+    setCheckoutError(null);
+    setCheckoutLoading(true);
+    try {
+      const items = event.tiers
+        .filter((t) => (quantities[t.name] ?? 0) > 0)
+        .map((t) => ({ tierName: t.name, quantity: quantities[t.name] }));
+
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId: event.id, buyerName, buyerEmail, items }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Checkout failed.");
+      router.push(json.authorizationUrl);
+    } catch (err) {
+      setCheckoutError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      setCheckoutLoading(false);
+    }
   }
 
   return (
@@ -138,27 +171,55 @@ export default function TicketsClient() {
               </div>
 
               {summary.count > 0 && (
-                <div className="mt-4 space-y-1.5 border-t border-black/10 pt-4 text-sm">
-                  <div className="flex justify-between text-muted-onlight">
-                    <span>Subtotal ({summary.count} ticket{summary.count > 1 ? "s" : ""})</span>
-                    <span>{formatNaira(summary.subtotal)}</span>
+                <>
+                  <div className="mt-4 space-y-1.5 border-t border-black/10 pt-4 text-sm">
+                    <div className="flex justify-between text-muted-onlight">
+                      <span>Subtotal ({summary.count} ticket{summary.count > 1 ? "s" : ""})</span>
+                      <span>{formatNaira(summary.subtotal)}</span>
+                    </div>
+                    <div className="flex justify-between text-muted-onlight">
+                      <span>Fees</span>
+                      <span>{formatNaira(summary.fees)}</span>
+                    </div>
+                    <div className="flex justify-between text-base font-bold text-ink">
+                      <span>Total</span>
+                      <span>{formatNaira(summary.subtotal + summary.fees)}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-muted-onlight">
-                    <span>Fees</span>
-                    <span>{formatNaira(summary.fees)}</span>
+
+                  <div className="mt-5 space-y-3 border-t border-black/10 pt-5">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-onlight">
+                      Your Details
+                    </p>
+                    <input
+                      value={buyerName}
+                      onChange={(e) => setBuyerName(e.target.value)}
+                      placeholder="Full name"
+                      className="w-full border border-black/15 bg-white px-4 py-3 text-sm focus:outline-none focus:border-ink"
+                    />
+                    <input
+                      type="email"
+                      value={buyerEmail}
+                      onChange={(e) => setBuyerEmail(e.target.value)}
+                      placeholder="Email address — tickets are sent here"
+                      className="w-full border border-black/15 bg-white px-4 py-3 text-sm focus:outline-none focus:border-ink"
+                    />
                   </div>
-                  <div className="flex justify-between text-base font-bold text-ink">
-                    <span>Total</span>
-                    <span>{formatNaira(summary.subtotal + summary.fees)}</span>
-                  </div>
-                </div>
+                </>
               )}
 
-              <Button variant="dark" className="mt-6 w-full" disabled={summary.count === 0}>
+              {checkoutError && <p className="mt-3 text-xs font-medium text-bigdrip">{checkoutError}</p>}
+
+              <button
+                onClick={handleCheckout}
+                disabled={summary.count === 0 || checkoutLoading}
+                className="mt-6 flex w-full items-center justify-center gap-2 bg-ink px-6 py-3.5 text-xs font-semibold uppercase tracking-[0.14em] text-paper transition-colors hover:bg-gold hover:text-gold-ink disabled:pointer-events-none disabled:opacity-40"
+              >
+                {checkoutLoading && <Loader2 className="size-3.5 animate-spin" />}
                 Proceed to Checkout
-              </Button>
+              </button>
               <p className="mt-2 flex items-center justify-center gap-1.5 text-[11px] text-muted-onlight">
-                <ShieldCheck className="size-3.5" /> Secure checkout — payment provider connects when the backend is live
+                <ShieldCheck className="size-3.5" /> Secure checkout powered by Paystack
               </p>
 
               <div className="mt-6 grid grid-cols-3 gap-3 border-t border-black/10 pt-6 text-center">

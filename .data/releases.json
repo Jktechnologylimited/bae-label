@@ -1,0 +1,234 @@
+[
+  {
+    "id": "r1",
+    "title": "Concrete Halo",
+    "artist": "Tunde Vega",
+    "label": "bigdripuniverse",
+    "type": "Album",
+    "trackCount": 14,
+    "year": 2025,
+    "blurb": "A powerful body of work that defines the sound of the movement.",
+    "tracks": [
+      {
+        "title": "Concrete Halo (Intro)",
+        "duration": "02:14"
+      },
+      {
+        "title": "No Ceilings",
+        "duration": "03:21"
+      },
+      {
+        "title": "Drip Season",
+        "duration": "03:45"
+      },
+      {
+        "title": "Low End Theory",
+        "duration": "04:02"
+      },
+      {
+        "title": "Glass City",
+        "duration": "03:10"
+      }
+    ]
+  },
+  {
+    "id": "r2",
+    "title": "Elevate",
+    "artist": "Nyra James",
+    "label": "ag20",
+    "type": "Single",
+    "trackCount": 1,
+    "year": 2025,
+    "blurb": "A slow-burn single about outgrowing who you used to be.",
+    "tracks": [
+      {
+        "title": "Elevate",
+        "duration": "03:38"
+      }
+    ]
+  },
+  {
+    "id": "r3",
+    "title": "Different Life",
+    "artist": "Nadia Cruz",
+    "label": "elmayanaconcept",
+    "type": "EP",
+    "trackCount": 6,
+    "year": 2025,
+    "blurb": "Six tracks of alté-electronic hybrids recorded live in Lagos.",
+    "tracks": [
+      {
+        "title": "Different Life",
+        "duration": "03:12"
+      },
+      {
+        "title": "Water Sign",
+        "duration": "02:58"
+      },
+      {
+        "title": "Mirror Talk",
+        "duration": "03:40"
+      },
+      {
+        "title": "Overgrown",
+        "duration": "04:05"
+      },
+      {
+        "title": "Low Light",
+        "duration": "03:21"
+      },
+      {
+        "title": "Different Life (Reprise)",
+        "duration": "01:52"
+      }
+    ]
+  },
+  {
+    "id": "r4",
+    "title": "No Turning Back",
+    "artist": "Ricochet",
+    "label": "bigdripuniverse",
+    "type": "Single",
+    "trackCount": 1,
+    "year": 2025,
+    "blurb": "The drill anthem that soundtracked BAE Summer Wave.",
+    "tracks": [
+      {
+        "title": "No Turning Back",
+        "duration": "03:05"
+      }
+    ]
+  },
+  {
+    "id": "r5",
+    "title": "Bloomfield",
+    "artist": "Deshawn Cole",
+    "label": "ag20",
+    "type": "Album",
+    "trackCount": 12,
+    "year": 2025,
+    "blurb": "A neo-soul record built around a live rhythm section.",
+    "tracks": [
+      {
+        "title": "Bloomfield",
+        "duration": "03:44"
+      },
+      {
+        "title": "Slow Hours",
+        "duration": "04:12"
+      },
+      {
+        "title": "Keep",
+        "duration": "03:29"
+      },
+      {
+        "title": "Homegrown",
+        "duration": "03:58"
+      },
+      {
+        "title": "Say Less",
+        "duration": "02:47"
+      }
+    ]
+  },
+  {
+    "id": "r6",
+    "title": "Alpha State",
+    "artist": "Marlo Reign",
+    "label": "bigdripuniverse",
+    "type": "EP",
+    "trackCount": 7,
+    "year": 2024,
+    "blurb": "Seven tracks of maximalist production and razor verses.",
+    "tracks": [
+      {
+        "title": "Alpha State (Intro)",
+        "duration": "01:48"
+      },
+      {
+        "title": "Blackout",
+        "duration": "03:15"
+      },
+      {
+        "title": "Static",
+        "duration": "02:56"
+      }
+    ]
+  },
+  {
+    "id": "r7",
+    "title": "Dreams (Visualizer)",
+    "artist": "Alaya Rowe",
+    "label": "ag20",
+    "type": "Single",
+    "trackCount": 1,
+    "year": 2025,
+    "blurb": "AG20's breakout debut single, out now on all platforms.",
+    "tracks": [
+      {
+        "title": "Dreams",
+        "duration": "03:22"
+      }
+    ]
+  },
+  {
+    "id": "r8",
+    "title": "Gold Standard",
+    "artist": "Kesie",
+    "label": "bigdripuniverse",
+    "type": "Album",
+    "trackCount": 16,
+    "year": 2024,
+    "blurb": "Sixteen tracks charting BigDripUniverse's biggest year yet.",
+    "tracks": [
+      {
+        "title": "Gold Standard (Intro)",
+        "duration": "02:02"
+      },
+      {
+        "title": "Higher",
+        "duration": "03:33"
+      },
+      {
+        "title": "No Sleep",
+        "duration": "03:19"
+      }
+    ]
+  },
+  {
+    "id": "r9",
+    "title": "Bassline Prophet",
+    "artist": "Obi Waves",
+    "label": "elmayanaconcept",
+    "type": "EP",
+    "trackCount": 5,
+    "year": 2025,
+    "blurb": "Amapiano rhythm meets ambient electronic texture across five tracks.",
+    "tracks": [
+      {
+        "title": "Bassline Prophet",
+        "duration": "04:41"
+      },
+      {
+        "title": "Low Orbit",
+        "duration": "05:02"
+      }
+    ]
+  },
+  {
+    "id": "r10",
+    "title": "Continental",
+    "artist": "Koje",
+    "label": "elmayanaconcept",
+    "type": "Single",
+    "trackCount": 1,
+    "year": 2025,
+    "blurb": "The record that soundtracked three continents this summer.",
+    "tracks": [
+      {
+        "title": "Continental",
+        "duration": "03:08"
+      }
+    ]
+  }
+]

@@ -8,7 +8,6 @@ import Tabs from "@/components/ui/Tabs";
 import Select from "@/components/ui/Select";
 import Placeholder from "@/components/ui/Placeholder";
 import NewsletterForm from "@/components/layout/NewsletterForm";
-import { NEWS } from "@/lib/data";
 import { NewsPost } from "@/lib/types";
 
 const TABS = [
@@ -27,23 +26,23 @@ const PRESS = [
   { title: "BigDripUniverse, AG20 & ElmayanaConcept Unite", source: "TNL Mag", date: "May 14, 2025" },
 ];
 
-export default function NewsClient() {
+export default function NewsClient({ news: NEWS }: { news: NewsPost[] }) {
   const [tab, setTab] = useState("all");
   const [sort, setSort] = useState("latest");
 
   const filtered = useMemo(() => {
     const base = tab === "all" ? NEWS : NEWS.filter((n) => n.category === tab);
     return sort === "oldest" ? [...base].reverse() : base;
-  }, [tab, sort]);
+  }, [NEWS, tab, sort]);
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { All: NEWS.length };
     for (const n of NEWS) counts[n.category] = (counts[n.category] ?? 0) + 1;
     return counts;
-  }, []);
+  }, [NEWS]);
 
-  const featured = NEWS[0];
-  const rest = filtered.filter((n) => n.id !== featured.id);
+  const featured = NEWS[0] as NewsPost | undefined;
+  const rest = filtered.filter((n) => n.id !== featured?.id);
 
   return (
     <div className="bg-paper text-ink">
@@ -76,6 +75,8 @@ export default function NewsClient() {
       <section className="mx-auto max-w-[1400px] px-6 py-12 lg:px-10">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_340px]">
           <div>
+            {featured && (
+            <>
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-onlight">Featured News</p>
             <Link href={`#${featured.id}`} className="group mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 sm:items-center">
               <Placeholder tone="gold" aspect="aspect-[16/10]" />
@@ -95,6 +96,8 @@ export default function NewsClient() {
                 </span>
               </div>
             </Link>
+            </>
+            )}
 
             <p className="mt-12 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-onlight">Latest News</p>
             <div className="mt-4 divide-y divide-black/10 border-t border-black/10">

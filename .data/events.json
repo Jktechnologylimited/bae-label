@@ -1,0 +1,212 @@
+[
+  {
+    "id": "e1",
+    "name": "BAE Summer Wave",
+    "day": "28",
+    "month": "JUN",
+    "fullDate": "Saturday, June 28, 2025",
+    "time": "Doors open 7:00 PM",
+    "city": "Los Angeles, CA",
+    "venue": "The Novo",
+    "labels": [
+      "bigdripuniverse",
+      "ag20"
+    ],
+    "status": "upcoming",
+    "description": "A night of music, energy and culture as BAE brings together BigDripUniverse, AG20 and ElmayanaConcept for one unforgettable stage.",
+    "tiers": [
+      {
+        "name": "Early Bird",
+        "price": 15000,
+        "fee": 1000,
+        "note": "Limited time offer"
+      },
+      {
+        "name": "General Admission",
+        "price": 25000,
+        "fee": 1500,
+        "note": "Access to all performances"
+      },
+      {
+        "name": "VIP",
+        "price": 50000,
+        "fee": 2000,
+        "note": "Priority entry, VIP lounge access"
+      },
+      {
+        "name": "VVIP",
+        "price": 100000,
+        "fee": 3000,
+        "note": "Meet & greet, exclusive merch, premium seating"
+      }
+    ]
+  },
+  {
+    "id": "e2",
+    "name": "AG20 Live in Lagos",
+    "day": "12",
+    "month": "JUL",
+    "fullDate": "Saturday, July 12, 2025",
+    "time": "Doors open 6:00 PM",
+    "city": "Lagos, Nigeria",
+    "venue": "Eko Convention Centre",
+    "labels": [
+      "ag20",
+      "elmayanaconcept"
+    ],
+    "status": "upcoming",
+    "description": "AG20's biggest headline show yet, with support from ElmayanaConcept's rising roster.",
+    "tiers": [
+      {
+        "name": "General Admission",
+        "price": 20000,
+        "fee": 1500,
+        "note": "Standing floor access"
+      },
+      {
+        "name": "VIP",
+        "price": 45000,
+        "fee": 2000,
+        "note": "Reserved seating, welcome drink"
+      },
+      {
+        "name": "VVIP",
+        "price": 90000,
+        "fee": 3000,
+        "note": "Meet & greet and backstage tour"
+      }
+    ]
+  },
+  {
+    "id": "e3",
+    "name": "ElmayanaConcept Live",
+    "day": "26",
+    "month": "AUG",
+    "fullDate": "Wednesday, August 26, 2025",
+    "time": "Doors open 7:30 PM",
+    "city": "Houston, TX",
+    "venue": "Warehouse Live",
+    "labels": [
+      "elmayanaconcept"
+    ],
+    "status": "upcoming",
+    "description": "An intimate showcase of ElmayanaConcept's full roster in one of Houston's most storied rooms.",
+    "tiers": [
+      {
+        "name": "General Admission",
+        "price": 18000,
+        "fee": 1200,
+        "note": "Standing floor access"
+      },
+      {
+        "name": "VIP",
+        "price": 40000,
+        "fee": 1800,
+        "note": "Front-of-stage viewing"
+      }
+    ]
+  },
+  {
+    "id": "e4",
+    "name": "BAE World Tour — London",
+    "day": "07",
+    "month": "SEP",
+    "fullDate": "Sunday, September 7, 2025",
+    "time": "Doors open 6:30 PM",
+    "city": "London, UK",
+    "venue": "O2 Academy Brixton",
+    "labels": [
+      "bigdripuniverse",
+      "ag20",
+      "elmayanaconcept"
+    ],
+    "status": "upcoming",
+    "description": "The full BAE roster crosses the Atlantic for the first stop of the BAE World Tour.",
+    "tiers": [
+      {
+        "name": "General Admission",
+        "price": 22000,
+        "fee": 1500,
+        "note": "Standing floor access"
+      },
+      {
+        "name": "VIP",
+        "price": 55000,
+        "fee": 2200,
+        "note": "Balcony seating, welcome drink"
+      },
+      {
+        "name": "VVIP",
+        "price": 110000,
+        "fee": 3500,
+        "note": "Meet & greet, exclusive merch"
+      }
+    ]
+  },
+  {
+    "id": "e5",
+    "name": "BigDripUniverse Showcase",
+    "day": "18",
+    "month": "MAY",
+    "fullDate": "Sunday, May 18, 2025",
+    "time": "Doors open 8:00 PM",
+    "city": "Atlanta, GA",
+    "venue": "Center Stage",
+    "labels": [
+      "bigdripuniverse"
+    ],
+    "status": "past",
+    "description": "A sold-out night introducing BigDripUniverse's newest signees to Atlanta.",
+    "tiers": []
+  },
+  {
+    "id": "e6",
+    "name": "AG20 Album Listening",
+    "day": "03",
+    "month": "MAY",
+    "fullDate": "Saturday, May 3, 2025",
+    "time": "Doors open 9:00 PM",
+    "city": "New York, NY",
+    "venue": "SOB's",
+    "labels": [
+      "ag20"
+    ],
+    "status": "past",
+    "description": "First listen of 'Bloomfield' with Deshawn Cole and the AG20 family.",
+    "tiers": []
+  },
+  {
+    "id": "e7",
+    "name": "ElmayanaConcept Sessions",
+    "day": "20",
+    "month": "APR",
+    "fullDate": "Sunday, April 20, 2025",
+    "time": "Doors open 7:00 PM",
+    "city": "Toronto, Canada",
+    "venue": "The Drake Hotel",
+    "labels": [
+      "elmayanaconcept"
+    ],
+    "status": "past",
+    "description": "A stripped-back live session series streamed to fans worldwide.",
+    "tiers": []
+  },
+  {
+    "id": "e8",
+    "name": "BAE Experience Miami",
+    "day": "05",
+    "month": "APR",
+    "fullDate": "Sunday, April 5, 2025",
+    "time": "Doors open 8:00 PM",
+    "city": "Miami, FL",
+    "venue": "Rolling Loud Miami",
+    "labels": [
+      "bigdripuniverse",
+      "ag20",
+      "elmayanaconcept"
+    ],
+    "status": "past",
+    "description": "BAE's takeover stage at Rolling Loud Miami, three labels back to back.",
+    "tiers": []
+  }
+]

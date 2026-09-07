@@ -1,0 +1,98 @@
+[
+  {
+    "id": "a1",
+    "name": "Tunde Vega",
+    "genre": "Trap / Drill",
+    "label": "bigdripuniverse",
+    "status": "active",
+    "bio": "Lagos-born rapper known for razor-edged verses over maximalist production."
+  },
+  {
+    "id": "a2",
+    "name": "Kessie",
+    "genre": "Afro-Fusion",
+    "label": "bigdripuniverse",
+    "status": "new",
+    "bio": "A rising voice merging highlife melodies with modern trap drums."
+  },
+  {
+    "id": "a3",
+    "name": "Marlo Reign",
+    "genre": "Hip-Hop",
+    "label": "bigdripuniverse",
+    "status": "active",
+    "bio": "Producer-rapper hybrid whose beats have shaped BigDrip's signature low end."
+  },
+  {
+    "id": "a4",
+    "name": "Nyra James",
+    "genre": "R&B / Soul",
+    "label": "ag20",
+    "status": "active",
+    "bio": "A honeyed alto voice writing unflinchingly about love and self-repair."
+  },
+  {
+    "id": "a5",
+    "name": "Deshawn Cole",
+    "genre": "Neo-Soul",
+    "label": "ag20",
+    "status": "active",
+    "bio": "Guitar-led songwriter bringing live-band warmth back to R&B."
+  },
+  {
+    "id": "a6",
+    "name": "Alaya Rowe",
+    "genre": "R&B",
+    "label": "ag20",
+    "status": "new",
+    "bio": "AG20's newest signee, discovered through a viral open-mic clip."
+  },
+  {
+    "id": "a7",
+    "name": "Femi Sola",
+    "genre": "Afrobeats",
+    "label": "elmayanaconcept",
+    "status": "active",
+    "bio": "Genre-blurring producer known for lush, percussive Afrobeats records."
+  },
+  {
+    "id": "a8",
+    "name": "Nadia Cruz",
+    "genre": "Alté",
+    "label": "elmayanaconcept",
+    "status": "active",
+    "bio": "Alté pioneer whose visuals are as talked-about as her records."
+  },
+  {
+    "id": "a9",
+    "name": "Obi Waves",
+    "genre": "Electronic / Afro",
+    "label": "elmayanaconcept",
+    "status": "new",
+    "bio": "DJ-producer fusing amapiano rhythms with ambient electronic textures."
+  },
+  {
+    "id": "a10",
+    "name": "Ricochet",
+    "genre": "Drill",
+    "label": "bigdripuniverse",
+    "status": "active",
+    "bio": "The label's most streamed drill act, known for relentless touring."
+  },
+  {
+    "id": "a11",
+    "name": "Bellamy Grace",
+    "genre": "R&B",
+    "label": "ag20",
+    "status": "active",
+    "bio": "A songwriter's songwriter, credited on records across all three labels."
+  },
+  {
+    "id": "a12",
+    "name": "Koje",
+    "genre": "Afrobeats",
+    "label": "elmayanaconcept",
+    "status": "active",
+    "bio": "Melodic Afrobeats star with three consecutive continental hits."
+  }
+]

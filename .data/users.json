@@ -1,0 +1,10 @@
+[
+  {
+    "id": "user_909383",
+    "name": "BAE Admin",
+    "email": "admin@bae.band",
+    "passwordHash": "scrypt:4327a4992847abb293ed0fd98a564b41:9d1d32a34d4cc0203c186475b669795926ff1a979fc95eab369a497cd8010e541bce83932b0682511f88a9d17357808652542fa69872343adad6cd2edf02bfe8",
+    "role": "admin",
+    "createdAt": "2026-09-07T17:07:48.718Z"
+  }
+]

@@ -1,0 +1,50 @@
+[
+  {
+    "id": "n1",
+    "category": "Announcement",
+    "title": "BAE Announces Bold New Chapter for the Culture",
+    "excerpt": "We're taking the movement global. New sounds, new partnerships and new experiences — this is just the beginning.",
+    "date": "May 21, 2025",
+    "readTime": "4 min read"
+  },
+  {
+    "id": "n2",
+    "category": "Music",
+    "title": "AG20 Drops Highly Anticipated Single \"No Turning Back\"",
+    "excerpt": "Ricochet returns with a powerful new record that speaks on growth, resilience and the journey forward.",
+    "date": "May 20, 2025",
+    "readTime": "3 min read"
+  },
+  {
+    "id": "n3",
+    "category": "Events",
+    "title": "ElmayanaConcept Live in Lagos — Tickets Out Now",
+    "excerpt": "Get ready, Lagos. ElmayanaConcept is bringing an unforgettable live experience this July.",
+    "date": "May 19, 2025",
+    "readTime": "2 min read"
+  },
+  {
+    "id": "n4",
+    "category": "Culture",
+    "title": "The BAE Fit: Style, Sound & Identity",
+    "excerpt": "Exploring how fashion, music and art come together to shape the BAE aesthetic.",
+    "date": "May 17, 2025",
+    "readTime": "5 min read"
+  },
+  {
+    "id": "n5",
+    "category": "Announcement",
+    "title": "BigDripUniverse Expands Creative Team",
+    "excerpt": "We're growing. Meet the new talent joining the BigDripUniverse family behind the scenes.",
+    "date": "May 17, 2025",
+    "readTime": "3 min read"
+  },
+  {
+    "id": "n6",
+    "category": "Industry",
+    "title": "The Rise of Independent Labels in Africa",
+    "excerpt": "A look at how independent labels are changing the game and taking control of the culture.",
+    "date": "May 13, 2025",
+    "readTime": "6 min read"
+  }
+]

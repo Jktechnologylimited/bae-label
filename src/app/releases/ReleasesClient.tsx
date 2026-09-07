@@ -12,7 +12,8 @@ import Eyebrow from "@/components/ui/Eyebrow";
 import Button from "@/components/ui/Button";
 import Placeholder from "@/components/ui/Placeholder";
 import SectionHeading from "@/components/ui/SectionHeading";
-import { RELEASES, LABELS } from "@/lib/data";
+import { LABELS } from "@/lib/data";
+import { Release } from "@/lib/types";
 import { LABEL_CLASSES, LABEL_SHORT } from "@/lib/labelStyle";
 
 const INCREMENT = 8;
@@ -24,7 +25,7 @@ const TYPE_TABS = [
   { key: "Single", label: "Singles" },
 ];
 
-export default function ReleasesClient() {
+export default function ReleasesClient({ releases: RELEASES }: { releases: Release[] }) {
   const [type, setType] = useState("all");
   const [label, setLabel] = useState("all");
   const [sort, setSort] = useState("latest");
@@ -35,10 +36,10 @@ export default function ReleasesClient() {
     if (label !== "all") list = list.filter((r) => r.label === label);
     list = [...list].sort((a, b) => (sort === "latest" ? b.year - a.year : a.year - b.year));
     return list;
-  }, [type, label, sort]);
+  }, [RELEASES, type, label, sort]);
 
   const featured = RELEASES[0];
-  const featuredCls = LABEL_CLASSES[featured.label];
+  const featuredCls = featured ? LABEL_CLASSES[featured.label] : null;
 
   return (
     <div className="bg-paper text-ink">
@@ -107,6 +108,7 @@ export default function ReleasesClient() {
       </section>
 
       {/* Featured release spotlight */}
+      {featured && (
       <section className="bg-ink py-6">
         <div className="mx-auto max-w-[1400px] px-6 lg:px-10">
           <div className="grid grid-cols-1 gap-8 border border-line bg-ink-soft p-6 sm:p-8 lg:grid-cols-[280px_1fr]">
@@ -120,7 +122,7 @@ export default function ReleasesClient() {
               </h3>
               <p className="mt-1 text-sm text-muted">{featured.artist}</p>
               <div className="mt-3 flex items-center gap-3 text-xs text-muted">
-                <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-white ${featuredCls.bg}`}>
+                <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-white ${featuredCls?.bg}`}>
                   {LABEL_SHORT[featured.label]}
                 </span>
                 <span>{featured.trackCount} Tracks · {featured.year}</span>
@@ -148,6 +150,7 @@ export default function ReleasesClient() {
           </div>
         </div>
       </section>
+      )}
 
       {/* Latest music videos */}
       <section className="mx-auto max-w-[1400px] px-6 py-16 lg:px-10">

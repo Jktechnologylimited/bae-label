@@ -6,6 +6,7 @@ import { CardGridSkeleton } from "@/components/ui/Skeleton";
 import PageHero from "@/components/sections/PageHero";
 import SectionHeading from "@/components/ui/SectionHeading";
 import Accordion from "@/components/ui/Accordion";
+import { listEvents } from "@/lib/db/events";
 
 export const metadata: Metadata = {
   title: "Get Tickets",
@@ -25,7 +26,8 @@ const FAQS = [
   { question: "What time should I arrive?", answer: "Doors typically open one hour before the listed set time. Arriving early helps you avoid entry lines." },
 ];
 
-export default function TicketsPage() {
+export default async function TicketsPage() {
+  const events = await listEvents();
   return (
     <div className="bg-paper text-ink">
       <PageHero
@@ -50,7 +52,7 @@ export default function TicketsPage() {
       />
 
       <Suspense fallback={<CardGridSkeleton count={4} />}>
-        <TicketsClient />
+        <TicketsClient events={events} />
       </Suspense>
 
       <section className="mx-auto max-w-[1400px] px-6 pb-20 pt-4 lg:px-10">

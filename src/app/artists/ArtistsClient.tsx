@@ -5,11 +5,12 @@ import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import Select from "@/components/ui/Select";
 import ArtistCard from "@/components/cards/ArtistCard";
-import { ARTISTS, LABELS } from "@/lib/data";
+import { LABELS } from "@/lib/data";
+import { Artist } from "@/lib/types";
 
 const PAGE_SIZE = 8;
 
-export default function ArtistsClient() {
+export default function ArtistsClient({ artists: ARTISTS }: { artists: Artist[] }) {
   const searchParams = useSearchParams();
   const initialLabel = searchParams.get("label") ?? "all";
 
@@ -37,7 +38,7 @@ export default function ArtistsClient() {
     if (kind === "sort") setSort(value);
   }
 
-  const genres = useMemo(() => Array.from(new Set(ARTISTS.map((a) => a.genre))), []);
+  const genres = useMemo(() => Array.from(new Set(ARTISTS.map((a) => a.genre))), [ARTISTS]);
 
   const filtered = useMemo(() => {
     let list = ARTISTS.filter((a) => (label === "all" ? true : a.label === label));
@@ -46,7 +47,7 @@ export default function ArtistsClient() {
     if (sort === "az") list = [...list].sort((a, b) => a.name.localeCompare(b.name));
     if (sort === "newest") list = [...list].sort((a, b) => (a.status === "new" ? -1 : 1) - (b.status === "new" ? -1 : 1));
     return list;
-  }, [label, genre, status, sort]);
+  }, [ARTISTS, label, genre, status, sort]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const visible = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);

@@ -10,21 +10,21 @@ import NewsletterBand from "@/components/sections/NewsletterBand";
 import LabelStrip from "@/components/sections/LabelStrip";
 import SectionHeading from "@/components/ui/SectionHeading";
 import Placeholder from "@/components/ui/Placeholder";
-import { EVENTS, LABELS, VENUES } from "@/lib/data";
-import { LabelSlug } from "@/lib/types";
+import { LABELS, VENUES } from "@/lib/data";
+import { BaeEvent, LabelSlug } from "@/lib/types";
 
-export default function EventsClient() {
+export default function EventsClient({ events }: { events: BaeEvent[] }) {
   const [query, setQuery] = useState("");
   const [label, setLabel] = useState("all");
 
   const upcoming = useMemo(
     () =>
-      EVENTS.filter((e) => e.status === "upcoming")
+      events.filter((e) => e.status === "upcoming")
         .filter((e) => (label === "all" ? true : e.labels.includes(label as LabelSlug)))
         .filter((e) => e.name.toLowerCase().includes(query.toLowerCase()) || e.city.toLowerCase().includes(query.toLowerCase())),
-    [query, label]
+    [events, query, label]
   );
-  const past = EVENTS.filter((e) => e.status === "past");
+  const past = events.filter((e) => e.status === "past");
 
   return (
     <div className="bg-paper text-ink">

@@ -3,6 +3,9 @@ import localFont from "next/font/local";
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import ConditionalChrome from "@/components/layout/ConditionalChrome";
+import { getCurrentUser } from "@/lib/auth/session";
+import { toSafeUser } from "@/lib/db/schema";
 
 const archivo = localFont({
   src: "../fonts/Archivo-Variable.ttf",
@@ -35,17 +38,22 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const user = await getCurrentUser();
+  const safeUser = user ? toSafeUser(user) : null;
+
   return (
     <html lang="en" className={`${archivo.variable} ${inter.variable} h-full`}>
       <body className="min-h-full flex flex-col bg-ink text-paper antialiased">
-        <Header />
+        <Header user={safeUser} />
         <main className="flex-1">{children}</main>
-        <Footer />
+        <ConditionalChrome>
+          <Footer />
+        </ConditionalChrome>
       </body>
     </html>
   );

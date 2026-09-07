@@ -6,12 +6,8 @@ import { ArrowRight, MapPin, Play } from "lucide-react";
 import clsx from "clsx";
 import Eyebrow from "@/components/ui/Eyebrow";
 import Placeholder from "@/components/ui/Placeholder";
-import { ARTISTS, EVENTS, RELEASES } from "@/lib/data";
 import { LABEL_CLASSES } from "@/lib/labelStyle";
-
-const featuredArtists = ARTISTS.slice(0, 5);
-const latestReleases = RELEASES.slice(0, 4);
-const upcomingEvents = EVENTS.filter((e) => e.status === "upcoming").slice(0, 3);
+import { BaeEvent, Artist, Release } from "@/lib/types";
 
 function Column({
   eyebrow,
@@ -54,7 +50,19 @@ function Column({
   );
 }
 
-export default function QuickHighlights() {
+export default function QuickHighlights({
+  events,
+  artists,
+  releases,
+}: {
+  events: BaeEvent[];
+  artists: Artist[];
+  releases: Release[];
+}) {
+  const featuredArtists = artists.slice(0, 5);
+  const latestReleases = releases.slice(0, 4);
+  const upcomingEvents = events.filter((e) => e.status === "upcoming").slice(0, 3);
+
   return (
     <section className="border-b border-line-soft py-16 lg:py-24">
       <div className="mx-auto max-w-[1400px] px-6 lg:px-10">

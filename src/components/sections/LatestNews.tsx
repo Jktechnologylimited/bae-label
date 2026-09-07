@@ -3,15 +3,15 @@
 import { motion } from "framer-motion";
 import NewsCard from "@/components/cards/NewsCard";
 import SectionHeading from "@/components/ui/SectionHeading";
-import { NEWS } from "@/lib/data";
+import { NewsPost } from "@/lib/types";
 
-export default function LatestNews() {
+export default function LatestNews({ news }: { news: NewsPost[] }) {
   return (
     <section className="py-16 lg:py-24">
       <div className="mx-auto max-w-[1400px] px-6 lg:px-10">
         <SectionHeading eyebrow="Latest News" title="Stay Updated" action="View All News" actionHref="/news" />
         <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {NEWS.slice(0, 3).map((post, i) => (
+          {news.slice(0, 3).map((post, i) => (
             <motion.div
               key={post.id}
               initial={{ opacity: 0, y: 20 }}

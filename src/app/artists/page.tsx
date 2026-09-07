@@ -4,13 +4,15 @@ import ArtistsClient from "./ArtistsClient";
 import { CardGridSkeleton } from "@/components/ui/Skeleton";
 import PageHero from "@/components/sections/PageHero";
 import LabelStrip from "@/components/sections/LabelStrip";
+import { listArtists } from "@/lib/db/artists";
 
 export const metadata: Metadata = {
   title: "Artists",
   description: "Meet the artists of BigDripUniverse, AG20 and ElmayanaConcept.",
 };
 
-export default function ArtistsPage() {
+export default async function ArtistsPage() {
+  const artists = await listArtists();
   return (
     <div className="bg-paper text-ink">
       <PageHero
@@ -22,7 +24,7 @@ export default function ArtistsPage() {
         tone="ink"
       />
       <Suspense fallback={<CardGridSkeleton />}>
-        <ArtistsClient />
+        <ArtistsClient artists={artists} />
       </Suspense>
       <LabelStrip />
     </div>
