@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import Image from "next/image";
 import { LucideIcon, Music2 } from "lucide-react";
 
 const TONES = {
@@ -18,6 +19,7 @@ export default function Placeholder({
   className,
   aspect = "aspect-[4/5]",
   pattern = "diagonal",
+  imageUrl,
 }: {
   tone?: Tone;
   icon?: LucideIcon;
@@ -25,8 +27,25 @@ export default function Placeholder({
   className?: string;
   aspect?: string;
   pattern?: "diagonal" | "grid" | "none";
+  /** When provided (e.g. from an admin-uploaded photo), renders the real
+   * image instead of the decorative gradient/pattern art below. */
+  imageUrl?: string;
 }) {
   const c = TONES[tone];
+
+  if (imageUrl) {
+    return (
+      <div className={clsx("relative overflow-hidden bg-ink-elevated", aspect, className)}>
+        <Image src={imageUrl} alt="" fill className="object-cover" unoptimized />
+        {label && (
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 pt-10">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-paper/80">{label}</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div
       className={clsx("relative overflow-hidden bg-ink-elevated", aspect, className)}

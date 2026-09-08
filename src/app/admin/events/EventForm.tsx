@@ -6,6 +6,7 @@ import { Loader2, Plus, Trash2, Save } from "lucide-react";
 import clsx from "clsx";
 import { BaeEvent } from "@/lib/types";
 import { LABELS } from "@/lib/data";
+import ImageUpload from "@/components/admin/ImageUpload";
 
 type TierDraft = { name: string; price: number; fee: number; note: string };
 
@@ -23,6 +24,7 @@ export default function EventForm({ event }: { event?: BaeEvent }) {
   const [status, setStatus] = useState<"upcoming" | "past">(event?.status ?? "upcoming");
   const [labels, setLabels] = useState<string[]>(event?.labels ?? []);
   const [description, setDescription] = useState(event?.description ?? "");
+  const [imageUrl, setImageUrl] = useState<string | undefined>(event?.imageUrl);
   const [tiers, setTiers] = useState<TierDraft[]>(
     event?.tiers?.length ? event.tiers : [{ name: "General Admission", price: 25000, fee: 1500, note: "" }]
   );
@@ -66,6 +68,7 @@ export default function EventForm({ event }: { event?: BaeEvent }) {
       labels,
       status,
       description,
+      imageUrl,
       tiers: tiers.map((t) => ({ ...t, price: Number(t.price), fee: Number(t.fee) })),
     };
 
@@ -125,6 +128,8 @@ export default function EventForm({ event }: { event?: BaeEvent }) {
           />
         </Field>
       </div>
+
+      <ImageUpload value={imageUrl} onChange={setImageUrl} label="Event Poster" />
 
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Labels</p>

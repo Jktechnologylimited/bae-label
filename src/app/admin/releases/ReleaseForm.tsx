@@ -4,8 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Save, Plus, Trash2 } from "lucide-react";
 import clsx from "clsx";
-import { Release, ReleaseType, Track } from "@/lib/types";
+import { Release, ReleaseType, Track, StreamingLink, StreamingPlatform } from "@/lib/types";
 import { LABELS } from "@/lib/data";
+import ImageUpload from "@/components/admin/ImageUpload";
+import { STREAMING_META } from "@/components/brand/StreamingIcon";
+
+const STREAMING_PLATFORMS = Object.keys(STREAMING_META) as StreamingPlatform[];
 
 const inputClass =
   "w-full border border-line bg-transparent px-3 py-2.5 text-sm text-paper placeholder:text-muted focus:outline-none focus:border-gold";
@@ -30,6 +34,8 @@ export default function ReleaseForm({ release }: { release?: Release }) {
   const [year, setYear] = useState(release?.year ?? new Date().getFullYear());
   const [blurb, setBlurb] = useState(release?.blurb ?? "");
   const [tracks, setTracks] = useState<Track[]>(release?.tracks?.length ? release.tracks : [{ title: "", duration: "03:00" }]);
+  const [streamingLinks, setStreamingLinks] = useState<StreamingLink[]>(release?.streamingLinks ?? []);
+  const [imageUrl, setImageUrl] = useState<string | undefined>(release?.imageUrl);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -43,6 +49,18 @@ export default function ReleaseForm({ release }: { release?: Release }) {
     setTracks((prev) => prev.filter((_, idx) => idx !== i));
   }
 
+  function updateStreamingLink(i: number, patch: Partial<StreamingLink>) {
+    setStreamingLinks((prev) => prev.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
+  }
+  function addStreamingLink() {
+    const used = new Set(streamingLinks.map((l) => l.platform));
+    const next = STREAMING_PLATFORMS.find((p) => !used.has(p)) ?? STREAMING_PLATFORMS[0];
+    setStreamingLinks((prev) => [...prev, { platform: next, url: "" }]);
+  }
+  function removeStreamingLink(i: number) {
+    setStreamingLinks((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -51,7 +69,7 @@ export default function ReleaseForm({ release }: { release?: Release }) {
       return;
     }
     setLoading(true);
-    const payload = { title, artist, label, type, year: Number(year), blurb, tracks, trackCount: tracks.length };
+    const payload = { title, artist, label, type, year: Number(year), blurb, tracks, trackCount: tracks.length, imageUrl, streamingLinks: streamingLinks.filter((l) => l.url.trim()) };
     try {
       const res = await fetch(isEdit ? `/api/admin/releases/${release!.id}` : "/api/admin/releases", {
         method: isEdit ? "PATCH" : "POST",
@@ -101,6 +119,8 @@ export default function ReleaseForm({ release }: { release?: Release }) {
         </Field>
       </div>
 
+      <ImageUpload value={imageUrl} onChange={setImageUrl} label="Cover Art" />
+
       <div>
         <div className="flex items-center justify-between">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Tracklist</p>
@@ -129,6 +149,60 @@ export default function ReleaseForm({ release }: { release?: Release }) {
               </button>
             </div>
           ))}
+        </div>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Streaming Links</p>
+          <button
+            type="button"
+            onClick={addStreamingLink}
+            disabled={streamingLinks.length >= STREAMING_PLATFORMS.length}
+            className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-gold disabled:opacity-40"
+          >
+            <Plus className="size-3.5" /> Add Link
+          </button>
+        </div>
+        <p className="mt-1 text-xs text-muted">
+          Paste the song&apos;s URL from each platform — these show up as icons on the release and on the site&apos;s
+          featured spotlight.
+        </p>
+        <div className="mt-3 space-y-2">
+          {streamingLinks.map((link, i) => (
+            <div key={i} className="flex items-center gap-2 border border-line p-2.5">
+              <select
+                value={link.platform}
+                onChange={(e) => updateStreamingLink(i, { platform: e.target.value as StreamingPlatform })}
+                className={clsx(inputClass, "w-40 shrink-0")}
+              >
+                {STREAMING_PLATFORMS.map((p) => (
+                  <option key={p} value={p}>
+                    {STREAMING_META[p].label}
+                  </option>
+                ))}
+              </select>
+              <input
+                value={link.url}
+                onChange={(e) => updateStreamingLink(i, { url: e.target.value })}
+                placeholder="https://open.spotify.com/track/…"
+                className={clsx(inputClass, "flex-1")}
+              />
+              <button
+                type="button"
+                onClick={() => removeStreamingLink(i)}
+                aria-label="Remove streaming link"
+                className="shrink-0 text-muted hover:text-bigdrip"
+              >
+                <Trash2 className="size-4" />
+              </button>
+            </div>
+          ))}
+          {streamingLinks.length === 0 && (
+            <p className="border border-dashed border-line px-3 py-4 text-center text-xs text-muted">
+              No streaming links yet — add one above.
+            </p>
+          )}
         </div>
       </div>
 

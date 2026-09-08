@@ -4,8 +4,10 @@ import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ConditionalChrome from "@/components/layout/ConditionalChrome";
+import WhatsAppWidget from "@/components/widgets/WhatsAppWidget";
 import { getCurrentUser } from "@/lib/auth/session";
 import { toSafeUser } from "@/lib/db/schema";
+import { getSettings } from "@/lib/db/settings";
 
 const archivo = localFont({
   src: "../fonts/Archivo-Variable.ttf",
@@ -45,6 +47,7 @@ export default async function RootLayout({
 }) {
   const user = await getCurrentUser();
   const safeUser = user ? toSafeUser(user) : null;
+  const settings = await getSettings();
 
   return (
     <html lang="en" className={`${archivo.variable} ${inter.variable} h-full`}>
@@ -53,6 +56,7 @@ export default async function RootLayout({
         <main className="flex-1">{children}</main>
         <ConditionalChrome>
           <Footer />
+          <WhatsAppWidget settings={settings} />
         </ConditionalChrome>
       </body>
     </html>

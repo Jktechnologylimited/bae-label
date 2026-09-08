@@ -15,7 +15,16 @@ export default async function AdminTicketsPage() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="border border-line bg-ink-elevated px-4 py-3 text-sm text-paper/90">
+        Looking to change ticket <strong className="font-semibold">prices or tiers</strong>? That&apos;s set per
+        event —{" "}
+        <Link href="/admin/events" className="font-semibold text-gold underline underline-offset-2">
+          go to Events
+        </Link>{" "}
+        and edit the show. This page manages individual tickets that have already been issued or purchased.
+      </div>
+
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-black uppercase tracking-tight">Tickets</h1>
           <p className="mt-1 text-sm text-muted">

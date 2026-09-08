@@ -40,7 +40,9 @@ export default function Header({ user }: { user: SafeUser | null }) {
     pathname.startsWith("/admin") ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/signup") ||
-    pathname.startsWith("/verify");
+    pathname.startsWith("/verify") ||
+    pathname.startsWith("/forgot-password") ||
+    pathname.startsWith("/reset-password");
   if (isStandaloneRoute) return null;
 
   return (

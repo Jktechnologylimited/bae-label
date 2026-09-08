@@ -11,7 +11,8 @@ export function hashPassword(password: string): string {
   return `scrypt:${salt}:${hash}`;
 }
 
-export function verifyPassword(password: string, stored: string): boolean {
+export function verifyPassword(password: string, stored: string | null): boolean {
+  if (!stored) return false;
   const [scheme, salt, hash] = stored.split(":");
   if (scheme !== "scrypt" || !salt || !hash) return false;
   const candidate = crypto.scryptSync(password, salt, 64).toString("hex");

@@ -3,14 +3,14 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Minus, Plus, ShieldCheck, Ticket as TicketIcon, RefreshCcw, ArrowLeftRight, Loader2 } from "lucide-react";
+import { ArrowLeft, Minus, Plus, ShieldCheck, Ticket as TicketIcon, RefreshCcw, ArrowLeftRight, Loader2, FlaskConical } from "lucide-react";
 import EventCard from "@/components/cards/EventCard";
 import Placeholder from "@/components/ui/Placeholder";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { formatNaira } from "@/lib/data";
 import { BaeEvent } from "@/lib/types";
 
-export default function TicketsClient({ events }: { events: BaeEvent[] }) {
+export default function TicketsClient({ events, testMode }: { events: BaeEvent[]; testMode: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const upcoming = events.filter((e) => e.status === "upcoming");
@@ -109,7 +109,7 @@ export default function TicketsClient({ events }: { events: BaeEvent[] }) {
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_1.1fr]">
             <div>
               <div className="relative aspect-[4/3] w-full overflow-hidden">
-                <Placeholder tone={event.labels[0]} aspect="aspect-auto h-full" />
+                <Placeholder tone={event.labels[0]} aspect="aspect-auto h-full" imageUrl={event.imageUrl} />
               </div>
               <div className="mt-6 flex items-start gap-4">
                 <div className="flex w-14 shrink-0 flex-col items-center bg-ink py-2 text-paper">
@@ -138,6 +138,15 @@ export default function TicketsClient({ events }: { events: BaeEvent[] }) {
               <h3 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-onlight">
                 Select Your Tickets
               </h3>
+              {testMode && (
+                <div className="mt-3 flex items-center gap-2 border border-gold/40 bg-gold/10 px-3 py-2 text-xs text-ink">
+                  <FlaskConical className="size-3.5 shrink-0 text-gold-ink" />
+                  <span>
+                    <strong className="font-semibold">Test mode</strong> — no payment provider is connected yet, so
+                    checkout will skip straight to your tickets instead of a real payment page.
+                  </span>
+                </div>
+              )}
               <div className="mt-4 divide-y divide-black/10">
                 {event.tiers.map((tier) => (
                   <div key={tier.name} className="flex items-center justify-between gap-4 py-4">

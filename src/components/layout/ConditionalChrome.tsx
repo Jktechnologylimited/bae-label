@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 
-const HIDDEN_PREFIXES = ["/admin", "/login", "/signup", "/verify"];
+const HIDDEN_PREFIXES = ["/admin", "/login", "/signup", "/verify", "/forgot-password", "/reset-password"];
 
 export default function ConditionalChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

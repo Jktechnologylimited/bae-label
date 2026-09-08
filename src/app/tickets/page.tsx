@@ -28,6 +28,7 @@ const FAQS = [
 
 export default async function TicketsPage() {
   const events = await listEvents();
+  const testMode = !process.env.PAYSTACK_SECRET_KEY;
   return (
     <div className="bg-paper text-ink">
       <PageHero
@@ -52,7 +53,7 @@ export default async function TicketsPage() {
       />
 
       <Suspense fallback={<CardGridSkeleton count={4} />}>
-        <TicketsClient events={events} />
+        <TicketsClient events={events} testMode={testMode} />
       </Suspense>
 
       <section className="mx-auto max-w-[1400px] px-6 pb-20 pt-4 lg:px-10">

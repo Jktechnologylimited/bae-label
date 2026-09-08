@@ -5,11 +5,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Loader2, LogIn } from "lucide-react";
 import BaeMark from "@/components/brand/BaeMark";
+import GoogleButton from "@/components/auth/GoogleButton";
+import { oauthErrorMessage } from "@/lib/auth/oauthErrors";
 
 export default function LoginClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/account";
+  const oauthError = oauthErrorMessage(searchParams.get("error"));
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -46,7 +49,22 @@ export default function LoginClient() {
         <h1 className="mt-6 text-center font-display text-2xl font-black uppercase tracking-tight">Welcome Back</h1>
         <p className="mt-1 text-center text-sm text-muted">Log in to view your tickets and account.</p>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-4 border border-line bg-ink-soft p-6">
+        {oauthError && (
+          <p className="mt-4 border border-bigdrip/40 bg-bigdrip/10 px-3 py-2 text-center text-xs text-paper">
+            {oauthError}
+          </p>
+        )}
+
+        <div className="mt-8">
+          <GoogleButton next={next} />
+        </div>
+        <div className="my-5 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
+          <span className="h-px flex-1 bg-line" />
+          or
+          <span className="h-px flex-1 bg-line" />
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4 border border-line bg-ink-soft p-6">
           <label className="block">
             <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">Email</span>
             <input
@@ -59,7 +77,12 @@ export default function LoginClient() {
             />
           </label>
           <label className="block">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">Password</span>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">Password</span>
+              <Link href="/forgot-password" className="text-[11px] font-semibold text-muted underline underline-offset-2 hover:text-paper">
+                Forgot password?
+              </Link>
+            </div>
             <input
               type="password"
               required

@@ -6,6 +6,7 @@ import { Loader2, Save } from "lucide-react";
 import clsx from "clsx";
 import { Artist } from "@/lib/types";
 import { LABELS } from "@/lib/data";
+import ImageUpload from "@/components/admin/ImageUpload";
 
 const inputClass =
   "w-full border border-line bg-transparent px-3 py-2.5 text-sm text-paper placeholder:text-muted focus:outline-none focus:border-gold";
@@ -28,6 +29,7 @@ export default function ArtistForm({ artist }: { artist?: Artist }) {
   const [label, setLabel] = useState(artist?.label ?? LABELS[0].slug);
   const [status, setStatus] = useState<"active" | "new">(artist?.status ?? "active");
   const [bio, setBio] = useState(artist?.bio ?? "");
+  const [imageUrl, setImageUrl] = useState<string | undefined>(artist?.imageUrl);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -39,7 +41,7 @@ export default function ArtistForm({ artist }: { artist?: Artist }) {
       return;
     }
     setLoading(true);
-    const payload = { name, genre, label, status, bio };
+    const payload = { name, genre, label, status, bio, imageUrl };
     try {
       const res = await fetch(isEdit ? `/api/admin/artists/${artist!.id}` : "/api/admin/artists", {
         method: isEdit ? "PATCH" : "POST",
@@ -84,6 +86,8 @@ export default function ArtistForm({ artist }: { artist?: Artist }) {
           <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} className={inputClass} placeholder="Short artist bio…" />
         </Field>
       </div>
+
+      <ImageUpload value={imageUrl} onChange={setImageUrl} label="Artist Photo" />
 
       {error && <p className="text-sm font-medium text-bigdrip">{error}</p>}
 

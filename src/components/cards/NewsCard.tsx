@@ -22,7 +22,7 @@ export default function NewsCard({ post, light = false }: { post: NewsPost; ligh
         light ? "border-black/10 bg-white hover:border-black/30" : "border-line bg-ink-soft hover:border-line"
       )}
     >
-      <Placeholder tone={CATEGORY_TONE[post.category]} aspect="aspect-[16/10]" />
+      <Placeholder tone={CATEGORY_TONE[post.category]} aspect="aspect-[16/10]" imageUrl={post.imageUrl} />
       <div className="p-5">
         <p className={clsx("text-[10px] font-bold uppercase tracking-[0.14em]", light ? "text-muted-onlight" : "text-muted")}>
           {post.category}

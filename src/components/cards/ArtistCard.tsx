@@ -19,7 +19,7 @@ export default function ArtistCard({ artist, light = false }: { artist: Artist; 
       )}
     >
       <div className="relative">
-        <Placeholder tone={artist.label} aspect="aspect-[4/5]" />
+        <Placeholder tone={artist.label} aspect="aspect-[4/5]" imageUrl={artist.imageUrl} />
         <span
           className={clsx(
             "absolute left-3 top-3 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-white",

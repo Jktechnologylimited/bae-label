@@ -6,8 +6,12 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  passwordHash: string;
+  /** Null for accounts created via Google sign-in that never set a local
+   * password — login route treats this as "password sign-in unavailable". */
+  passwordHash: string | null;
   role: Role;
+  googleId?: string;
+  avatarUrl?: string;
   createdAt: string;
 }
 

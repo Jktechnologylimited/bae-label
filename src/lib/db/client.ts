@@ -44,6 +44,34 @@ export async function writeJson<T>(file: string, data: T[]) {
   await fs.writeFile(file, JSON.stringify(data, null, 2), "utf-8");
 }
 
+// ---- Singleton object storage (e.g. site-wide settings) ----
+// Same directory/JSON approach as the list-based helpers above, but for a
+// single object rather than an array of records.
+
+async function ensureObjectFile<T>(file: string, defaults: T) {
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  try {
+    await fs.access(file);
+  } catch {
+    await fs.writeFile(file, JSON.stringify(defaults, null, 2), "utf-8");
+  }
+}
+
+export async function readJsonObject<T>(file: string, defaults: T): Promise<T> {
+  await ensureObjectFile(file, defaults);
+  const raw = await fs.readFile(file, "utf-8");
+  try {
+    return { ...defaults, ...(JSON.parse(raw) as Partial<T>) };
+  } catch {
+    return defaults;
+  }
+}
+
+export async function writeJsonObject<T>(file: string, data: T) {
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  await fs.writeFile(file, JSON.stringify(data, null, 2), "utf-8");
+}
+
 export function newId(prefix: string): string {
   const n = Math.floor(100000 + Math.random() * 900000);
   return `${prefix}_${n}`;

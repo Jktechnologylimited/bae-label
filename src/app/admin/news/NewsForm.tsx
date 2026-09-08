@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, Save } from "lucide-react";
 import clsx from "clsx";
 import { NewsPost } from "@/lib/types";
+import ImageUpload from "@/components/admin/ImageUpload";
 
 const inputClass =
   "w-full border border-line bg-transparent px-3 py-2.5 text-sm text-paper placeholder:text-muted focus:outline-none focus:border-gold";
@@ -29,6 +30,7 @@ export default function NewsForm({ post }: { post?: NewsPost }) {
   const [excerpt, setExcerpt] = useState(post?.excerpt ?? "");
   const [date, setDate] = useState(post?.date ?? new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }));
   const [readTime, setReadTime] = useState(post?.readTime ?? "3 min read");
+  const [imageUrl, setImageUrl] = useState<string | undefined>(post?.imageUrl);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -40,7 +42,7 @@ export default function NewsForm({ post }: { post?: NewsPost }) {
       return;
     }
     setLoading(true);
-    const payload = { title, category, excerpt, date, readTime };
+    const payload = { title, category, excerpt, date, readTime, imageUrl };
     try {
       const res = await fetch(isEdit ? `/api/admin/news/${post!.id}` : "/api/admin/news", {
         method: isEdit ? "PATCH" : "POST",
@@ -82,6 +84,8 @@ export default function NewsForm({ post }: { post?: NewsPost }) {
           <textarea value={excerpt} onChange={(e) => setExcerpt(e.target.value)} rows={3} className={inputClass} placeholder="Short summary shown on the news cards…" />
         </Field>
       </div>
+
+      <ImageUpload value={imageUrl} onChange={setImageUrl} label="Cover Image" />
 
       {error && <p className="text-sm font-medium text-bigdrip">{error}</p>}
 

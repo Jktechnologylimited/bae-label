@@ -18,19 +18,33 @@ export async function getUserById(id: string): Promise<User | undefined> {
   return users.find((u) => u.id === id);
 }
 
-export async function createUser(input: { name: string; email: string; password: string; role?: Role }): Promise<User> {
+export async function createUser(input: {
+  name: string;
+  email: string;
+  password?: string;
+  role?: Role;
+  googleId?: string;
+  avatarUrl?: string;
+}): Promise<User> {
   const users = await readJson<User>(FILE);
   const user: User = {
     id: newId("user"),
     name: input.name,
     email: input.email.toLowerCase(),
-    passwordHash: hashPassword(input.password),
+    passwordHash: input.password ? hashPassword(input.password) : null,
     role: input.role ?? "customer",
+    googleId: input.googleId,
+    avatarUrl: input.avatarUrl,
     createdAt: new Date().toISOString(),
   };
   users.push(user);
   await writeJson(FILE, users);
   return user;
+}
+
+export async function getUserByGoogleId(googleId: string): Promise<User | undefined> {
+  const users = await readJson<User>(FILE);
+  return users.find((u) => u.googleId === googleId);
 }
 
 export async function updateUser(id: string, patch: Partial<Omit<User, "id">>): Promise<User | undefined> {

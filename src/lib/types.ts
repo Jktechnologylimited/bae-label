@@ -18,6 +18,7 @@ export interface Artist {
   label: LabelSlug;
   bio: string;
   status: "active" | "new";
+  imageUrl?: string;
 }
 
 export type ReleaseType = "Album" | "EP" | "Single";
@@ -25,6 +26,13 @@ export type ReleaseType = "Album" | "EP" | "Single";
 export interface Track {
   title: string;
   duration: string;
+}
+
+export type StreamingPlatform = "spotify" | "appleMusic" | "youtubeMusic" | "audiomack" | "boomplay" | "soundcloud";
+
+export interface StreamingLink {
+  platform: StreamingPlatform;
+  url: string;
 }
 
 export interface Release {
@@ -37,6 +45,8 @@ export interface Release {
   year: number;
   blurb: string;
   tracks: Track[];
+  imageUrl?: string;
+  streamingLinks?: StreamingLink[];
 }
 
 export interface BaeEvent {
@@ -52,6 +62,7 @@ export interface BaeEvent {
   status: "upcoming" | "past";
   description: string;
   tiers: { name: string; price: number; fee: number; note: string }[];
+  imageUrl?: string;
 }
 
 export interface NewsPost {
@@ -61,6 +72,7 @@ export interface NewsPost {
   excerpt: string;
   date: string;
   readTime: string;
+  imageUrl?: string;
 }
 
 export interface CultureStory {

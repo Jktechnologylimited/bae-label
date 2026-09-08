@@ -7,6 +7,7 @@ import PageHero from "@/components/sections/PageHero";
 import Select from "@/components/ui/Select";
 import Tabs from "@/components/ui/Tabs";
 import ReleaseCard from "@/components/cards/ReleaseCard";
+import { StreamingButtonList } from "@/components/cards/StreamingLinks";
 import LabelStrip from "@/components/sections/LabelStrip";
 import Eyebrow from "@/components/ui/Eyebrow";
 import Button from "@/components/ui/Button";
@@ -113,7 +114,7 @@ export default function ReleasesClient({ releases: RELEASES }: { releases: Relea
         <div className="mx-auto max-w-[1400px] px-6 lg:px-10">
           <div className="grid grid-cols-1 gap-8 border border-line bg-ink-soft p-6 sm:p-8 lg:grid-cols-[280px_1fr]">
             <div className="relative aspect-square w-full overflow-hidden">
-              <Placeholder tone={featured.label} aspect="aspect-auto h-full" pattern="grid" />
+              <Placeholder tone={featured.label} aspect="aspect-auto h-full" pattern="grid" imageUrl={featured.imageUrl} />
             </div>
             <div>
               <Eyebrow>Featured Release</Eyebrow>
@@ -128,9 +129,13 @@ export default function ReleasesClient({ releases: RELEASES }: { releases: Relea
                 <span>{featured.trackCount} Tracks · {featured.year}</span>
               </div>
               <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted">{featured.blurb}</p>
-              <Button variant="gold" icon="none" className="mt-5">
-                <Play className="size-3.5 fill-current" /> Listen Now
-              </Button>
+              {featured.streamingLinks && featured.streamingLinks.length > 0 ? (
+                <StreamingButtonList links={featured.streamingLinks} className="mt-5" />
+              ) : (
+                <Button variant="gold" icon="none" className="mt-5">
+                  <Play className="size-3.5 fill-current" /> Listen Now
+                </Button>
+              )}
 
               <div className="mt-8 divide-y divide-line-soft border-t border-line-soft">
                 {featured.tracks.map((track, i) => (
@@ -159,7 +164,7 @@ export default function ReleasesClient({ releases: RELEASES }: { releases: Relea
           {RELEASES.slice(0, 5).map((r) => (
             <div key={r.id} className="group cursor-pointer">
               <div className="relative overflow-hidden">
-                <Placeholder tone={r.label} aspect="aspect-video" />
+                <Placeholder tone={r.label} aspect="aspect-video" imageUrl={r.imageUrl} />
                 <span className="absolute inset-0 flex items-center justify-center">
                   <span className="flex size-9 items-center justify-center rounded-full bg-white/90 text-ink transition-transform group-hover:scale-110">
                     <Play className="size-3.5 translate-x-[1px] fill-current" />

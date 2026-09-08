@@ -15,6 +15,18 @@ export async function POST(req: NextRequest) {
     }
 
     const user = await getUserByEmail(email);
+
+    // Don't reveal whether the email exists at all — but if it does and the
+    // account was created via Google (no local password set), give a
+    // specific, helpful message rather than a generic "incorrect password"
+    // that would leave someone stuck guessing passwords that never existed.
+    if (user && !user.passwordHash) {
+      return NextResponse.json(
+        { error: "This account uses Google sign-in. Use the \"Continue with Google\" button instead." },
+        { status: 401 }
+      );
+    }
+
     if (!user || !verifyPassword(password, user.passwordHash)) {
       return NextResponse.json({ error: "Incorrect email or password." }, { status: 401 });
     }

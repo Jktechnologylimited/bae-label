@@ -17,7 +17,7 @@ export default function EventCard({ event, light = false }: { event: BaeEvent; l
       )}
     >
       <div className="relative">
-        <Placeholder tone={primary} aspect="aspect-[16/10]" pattern="diagonal" />
+        <Placeholder tone={primary} aspect="aspect-[16/10]" pattern="diagonal" imageUrl={event.imageUrl} />
         <div className="absolute left-3 top-3 flex w-12 flex-col items-center bg-black/80 py-1.5 text-white">
           <span className="font-display text-lg font-black leading-none">{event.day}</span>
           <span className="text-[10px] font-bold uppercase tracking-[0.08em]">{event.month}</span>

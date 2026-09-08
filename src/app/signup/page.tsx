@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, UserPlus } from "lucide-react";
 import BaeMark from "@/components/brand/BaeMark";
+import GoogleButton from "@/components/auth/GoogleButton";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -44,7 +45,16 @@ export default function SignupPage() {
         <h1 className="mt-6 text-center font-display text-2xl font-black uppercase tracking-tight">Join BAE</h1>
         <p className="mt-1 text-center text-sm text-muted">Create an account to manage your tickets.</p>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-4 border border-line bg-ink-soft p-6">
+        <div className="mt-8">
+          <GoogleButton />
+        </div>
+        <div className="my-5 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
+          <span className="h-px flex-1 bg-line" />
+          or
+          <span className="h-px flex-1 bg-line" />
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4 border border-line bg-ink-soft p-6">
           <label className="block">
             <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">Full Name</span>
             <input

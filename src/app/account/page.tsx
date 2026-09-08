@@ -38,8 +38,12 @@ export default async function AccountPage() {
         <div className="mx-auto max-w-4xl px-6 py-10 lg:px-10">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <span className="flex size-11 items-center justify-center border border-black/15 bg-white">
-                <UserIcon className="size-5" />
+              <span className="flex size-11 shrink-0 items-center justify-center overflow-hidden border border-black/15 bg-white">
+                {user.avatarUrl ? (
+                  <Image src={user.avatarUrl} alt="" width={44} height={44} unoptimized className="size-full object-cover" />
+                ) : (
+                  <UserIcon className="size-5" />
+                )}
               </span>
               <div>
                 <h1 className="font-display text-xl font-black uppercase tracking-tight">{user.name}</h1>
@@ -147,9 +151,22 @@ export default async function AccountPage() {
       </section>
 
       <section className="mx-auto max-w-4xl px-6 pb-16 lg:px-10">
-        <h2 className="font-display text-lg font-black uppercase tracking-tight">Change Password</h2>
+        <h2 className="font-display text-lg font-black uppercase tracking-tight">Password</h2>
         <div className="mt-4 max-w-sm">
-          <ChangePasswordForm />
+          {user.passwordHash ? (
+            <ChangePasswordForm />
+          ) : (
+            <div className="border border-black/10 bg-paper-soft p-4 text-sm text-muted-onlight">
+              You signed in with Google, so there&apos;s no password on this account yet.{" "}
+              <Link
+                href={`/forgot-password?email=${encodeURIComponent(user.email)}`}
+                className="font-semibold text-ink underline underline-offset-2"
+              >
+                Set a password
+              </Link>{" "}
+              if you&apos;d also like to log in with email.
+            </div>
+          )}
         </div>
       </section>
     </div>
