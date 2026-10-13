@@ -2,27 +2,32 @@ import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
 import crypto from "crypto";
+import { put } from "@vercel/blob";
 import { getCurrentUser } from "@/lib/auth/session";
 
 /**
- * Saves uploaded images to .data/uploads/ and serves them back at
- * /uploads/<file> via a dynamic route handler (src/app/uploads/[filename]),
- * NOT via Next's static public/ folder.
+ * Image storage has two modes, chosen automatically by whether
+ * BLOB_READ_WRITE_TOKEN is set:
  *
- * This matters: Next's production server (`next start`) builds its list of
- * servable public/ files at boot and does not pick up files written there
- * after the process has started — confirmed by testing during development,
- * a newly-uploaded file 404'd until the server restarted. Routing uploads
- * through a normal route handler that reads from disk per-request sidesteps
- * that entirely, since it's just a dynamic request rather than a static
- * asset lookup.
+ * 1. Vercel Blob (production / anywhere BLOB_READ_WRITE_TOKEN is set).
+ *    Vercel injects this env var automatically once a Blob store is
+ *    connected to the project (Vercel dashboard → Storage → Blob →
+ *    Connect to Project). Files go to real, persistent object storage and
+ *    the response URL is the blob's own public CDN URL.
  *
- * IMPORTANT: this still writes to the local filesystem, same caveat as the
- * .data/*.json store — it will NOT persist on a serverless host with an
- * ephemeral filesystem (e.g. Vercel). Before going live, swap this for a
- * real object storage provider (S3, Cloudinary, Vercel Blob, etc.) — the
- * upload response shape ({ url }) stays the same either way, so
- * ImageUpload.tsx and every form using it won't need to change.
+ * 2. Local filesystem (local dev, or any host with no Blob token set).
+ *    Saves to .data/uploads/ and serves it back via the dynamic route
+ *    handler at src/app/uploads/[filename], NOT Next's static public/
+ *    folder — `next start` snapshots public/ at boot and won't see files
+ *    added after the process starts, confirmed by testing.
+ *
+ * IMPORTANT: mode 2 writes to the local filesystem, which is NOT
+ * persistent on a serverless host with an ephemeral/read-only filesystem
+ * (e.g. Vercel without a Blob store connected) — uploads will fail there.
+ * If you're deploying to Vercel, connect a Blob store so
+ * BLOB_READ_WRITE_TOKEN is set; mode 1 then takes over automatically and
+ * nothing else needs to change (same { url } response shape either way,
+ * so ImageUpload.tsx and every form using it are unaffected).
  */
 
 const ALLOWED_TYPES: Record<string, string> = {
@@ -58,12 +63,48 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Image must be under 5MB." }, { status: 400 });
   }
 
-  const dir = uploadsDir();
-  await fs.mkdir(dir, { recursive: true });
-
   const filename = `${crypto.randomUUID()}.${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await fs.writeFile(path.join(dir, filename), buffer);
+
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    try {
+      const blob = await put(`uploads/${filename}`, file, {
+        access: "public",
+        contentType: file.type,
+      });
+      return NextResponse.json({ url: blob.url });
+    } catch (err) {
+      console.error("Image upload to Vercel Blob failed:", err);
+      return NextResponse.json(
+        { error: "Couldn't upload the image to storage. Please try again in a moment." },
+        { status: 500 }
+      );
+    }
+  }
+
+  // Local filesystem fallback (dev, or any non-serverless host).
+  const dir = uploadsDir();
+  try {
+    await fs.mkdir(dir, { recursive: true });
+    const buffer = Buffer.from(await file.arrayBuffer());
+    await fs.writeFile(path.join(dir, filename), buffer);
+  } catch (err) {
+    // Most likely cause: the host's filesystem is read-only or ephemeral
+    // (e.g. deployed to Vercel without a Blob store connected, or any
+    // serverless/container platform that doesn't give the app a
+    // persistent, writable disk). Surface that clearly instead of letting
+    // the request crash with an empty response body, which shows up
+    // client-side as a confusing "Unexpected end of JSON input" error.
+    console.error("Image upload failed to write to disk:", err);
+    return NextResponse.json(
+      {
+        error:
+          "Couldn't save the image on the server. If this is deployed to Vercel, connect a Blob store " +
+          "(Storage → Blob → Connect to Project) so BLOB_READ_WRITE_TOKEN is set — see the README's " +
+          "Image Uploads section.",
+      },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({ url: `/uploads/${filename}` });
 }

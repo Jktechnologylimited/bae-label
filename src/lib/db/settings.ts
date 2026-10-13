@@ -1,4 +1,4 @@
-import { readJsonObject, writeJsonObject, dataFile } from "./client";
+import { query } from "./pg";
 
 export interface SiteSettings {
   whatsappEnabled: boolean;
@@ -19,15 +19,25 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   ],
 };
 
-const FILE = dataFile("settings.json");
+const SETTINGS_ID = "singleton";
+
+interface Row {
+  data: Partial<SiteSettings>;
+}
 
 export async function getSettings(): Promise<SiteSettings> {
-  return readJsonObject<SiteSettings>(FILE, DEFAULT_SETTINGS);
+  const rows = await query<Row>(`SELECT data FROM site_settings WHERE id = $1`, [SETTINGS_ID]);
+  if (rows.length === 0) return DEFAULT_SETTINGS;
+  return { ...DEFAULT_SETTINGS, ...rows[0].data };
 }
 
 export async function updateSettings(patch: Partial<SiteSettings>): Promise<SiteSettings> {
   const current = await getSettings();
   const next = { ...current, ...patch };
-  await writeJsonObject(FILE, next);
+  await query(
+    `INSERT INTO site_settings (id, data) VALUES ($1, $2)
+     ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data`,
+    [SETTINGS_ID, JSON.stringify(next)]
+  );
   return next;
 }

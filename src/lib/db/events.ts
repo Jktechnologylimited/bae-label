@@ -1,41 +1,39 @@
-import { readJson, writeJson, dataFile, newId } from "./client";
+import { query, newId } from "./pg";
 import { DbEvent } from "./schema";
 import { BaeEvent } from "@/lib/types";
 import { ensureSeeded } from "./seed";
 
-const FILE = dataFile("events.json");
+interface Row {
+  data: DbEvent;
+}
 
 export async function listEvents(): Promise<DbEvent[]> {
   await ensureSeeded();
-  return readJson<DbEvent>(FILE);
+  const rows = await query<Row>(`SELECT data FROM events ORDER BY id`);
+  return rows.map((r) => r.data);
 }
 
 export async function getEvent(id: string): Promise<DbEvent | undefined> {
   await ensureSeeded();
-  const events = await readJson<DbEvent>(FILE);
-  return events.find((e) => e.id === id);
+  const rows = await query<Row>(`SELECT data FROM events WHERE id = $1`, [id]);
+  return rows[0]?.data;
 }
 
 export async function createEvent(input: Omit<BaeEvent, "id">): Promise<DbEvent> {
-  const events = await readJson<DbEvent>(FILE);
   const event: DbEvent = { ...input, id: newId("evt") };
-  events.push(event);
-  await writeJson(FILE, events);
+  await query(`INSERT INTO events (id, data) VALUES ($1, $2)`, [event.id, JSON.stringify(event)]);
   return event;
 }
 
 export async function updateEvent(id: string, patch: Partial<Omit<BaeEvent, "id">>): Promise<DbEvent | undefined> {
-  const events = await readJson<DbEvent>(FILE);
-  const idx = events.findIndex((e) => e.id === id);
-  if (idx === -1) return undefined;
-  events[idx] = { ...events[idx], ...patch };
-  await writeJson(FILE, events);
-  return events[idx];
+  const existing = await getEvent(id);
+  if (!existing) return undefined;
+  const next: DbEvent = { ...existing, ...patch };
+  await query(`UPDATE events SET data = $2 WHERE id = $1`, [id, JSON.stringify(next)]);
+  return next;
 }
 
 export async function deleteEvent(id: string): Promise<boolean> {
-  const events = await readJson<DbEvent>(FILE);
-  const next = events.filter((e) => e.id !== id);
-  await writeJson(FILE, next);
-  return next.length !== events.length;
+  const rows = await query(`DELETE FROM events WHERE id = $1 RETURNING id`, [id]);
+  return rows.length > 0;
 }

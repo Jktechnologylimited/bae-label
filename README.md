@@ -16,6 +16,9 @@ running the site.
 - **TypeScript**
 - **Tailwind CSS v4** — design tokens (colors, fonts) live in `src/app/globals.css` under `@theme`
 - **Framer Motion** — scroll-reveal and micro-interactions
+- **Postgres** (built and tested against [Neon](https://neon.tech)) — every real content type, order, ticket and
+  account lives here — see "Database" below
+- **Vercel Blob** — admin-uploaded images (falls back to local disk when not configured) — see "Image uploads" below
 - **Resend** — email delivery for the newsletter, contact form, and digital ticket delivery
 - **Paystack** — ticket checkout (REST API, no SDK) — see "Ticketing backend" below
 - **Google OAuth 2.0** — "Continue with Google" (hand-rolled, no SDK) — see "Connecting Google Sign-In" below
@@ -24,22 +27,28 @@ running the site.
 
 ## Getting started
 
+This app needs a Postgres database to run — even locally — because every piece of real content (events, artists,
+releases, news, accounts, orders, tickets, settings) is read and written through it; there's no file-based fallback.
+The easiest path is to use your real Neon database for local development too (Neon's free tier is generous and it's
+already on the internet, so there's no local Postgres to install):
+
 ```bash
 npm install
-cp .env.example .env.local   # optional — see the sections below for what each var does
+cp .env.example .env.local
+# edit .env.local and set DATABASE_URL to your Neon connection string — see "Database" below
 npm run dev
 ```
 
-Visit `http://localhost:3000`. On first run, a default admin account is created automatically and logged to your
-terminal:
+Visit `http://localhost:3000`. On first run, the app automatically creates its tables if they don't exist yet, seeds
+the starting catalog content, and creates a default admin account, all logged to your terminal:
 
 ```
 [seed] Created default admin account — email: admin@bae.band  password: BaeAdmin!2026
 [seed] Log in at /login and change this password immediately (see /account).
 ```
 
-Log in at `/login` with those credentials to reach `/admin`. **Change that password** (or set your own admin
-directly in `.data/users.json` before first run) before this ever goes near production.
+Log in at `/login` with those credentials to reach `/admin`. **Change that password immediately** before this ever
+goes near production — see `/account` once logged in.
 
 ```bash
 npm run build   # production build
@@ -120,8 +129,8 @@ src/
 **Real / database-backed and admin-manageable:** events (with ticket tiers, pricing, labels), artists, releases
 (with tracklists **and streaming platform links** — see "Streaming links" below), news posts, orders, tickets,
 users, and site-wide settings (currently just the WhatsApp widget config — see "WhatsApp chat widget" below). These
-live in `.data/*.json` (see "The data layer" below) and are created/edited through `/admin`, not hardcoded —
-content an admin creates or edits shows up on the public site immediately, no publish step.
+live in Postgres (see "Database" above) and are created/edited through `/admin`, not hardcoded — content an admin
+creates or edits shows up on the public site immediately, no publish step.
 
 **Still static mock content:** culture stories (on `/culture`), venues, and the three label descriptions
 (BigDripUniverse/AG20/ElmayanaConcept — name, tagline, colors) — these live in `src/lib/data.ts` as before. This
@@ -210,6 +219,51 @@ routes (`/api/newsletter`, `/api/contact`) that are already wired for [Resend](h
 4. Where the code says `// TODO`, that's where you'd persist newsletter subscribers to a real mailing list
    (Resend Audiences, a CRM, etc.) instead of only emailing a notification.
 
+## Database
+
+Every real content type (events, artists, releases, news, users, orders, tickets, settings, password reset tokens)
+is stored in Postgres — see `src/lib/db/pg.ts` for the connection and schema, and `src/lib/db/*.ts` /
+`src/lib/ticketing/store.ts` for the per-table modules built on it. There's no file-based fallback: `DATABASE_URL`
+is required to run the app at all, locally or in production.
+
+### Connecting Neon
+
+1. Create a [Neon](https://neon.tech) project (the free tier is enough for an MVP/single-event launch).
+2. In the Neon dashboard, copy the **pooled** connection string — the one with `-pooler` in the hostname, e.g.
+   `postgresql://user:password@ep-xxx-pooler.region.aws.neon.tech/dbname?sslmode=require`. Use the pooled one, not
+   the direct one: Vercel runs each request in its own short-lived serverless function, and without connection
+   pooling that would quickly exhaust Neon's direct connection limit under any real traffic.
+3. Add it to `.env.local` (local dev) and to your Vercel project's environment variables (production) as
+   `DATABASE_URL`.
+4. That's it — no separate migration step to run. The app creates its own tables on first connection
+   (`CREATE TABLE IF NOT EXISTS`, see `ensureSchema()` in `src/lib/db/pg.ts`) and seeds the starting catalog content
+   and default admin account the same way it always did (see `ensureSeeded()` in `src/lib/db/seed.ts`) — just
+   writing to real rows now instead of local JSON files.
+
+### How the data is modeled
+
+Most content tables (`events`, `artists`, `releases`, `news`, `site_settings`, `orders`, `tickets`) store each
+record as a single `data JSONB` column keyed by its own id, rather than a fully normalized relational schema — these
+types already carry nested structures (ticket tiers, tracklists, streaming links, order line items) that are always
+read and written as one unit, so a real, concurrent-safe, persistent JSONB row is a deliberate, honest middle step:
+genuinely production-safe, but not yet fully normalized. `users` is a real relational table (with a unique
+constraint on `email` and `google_id`, which the old JSON-file version had no way to enforce). `orders` and
+`tickets` additionally get indexed real columns for the fields looked up outside of "by id" (`user_id`,
+`paystack_reference`, `order_id`) so those queries don't need to scan JSONB.
+
+If you later want full normalization (e.g. a separate `ticket_tiers` table with a foreign key to `events`), the
+per-table modules in `src/lib/db/*.ts` are the only place that needs to change — every route handler and page calls
+these same exported functions and doesn't know or care how the row is actually shaped.
+
+### Local development without touching your production database
+
+Using the same Neon database for local dev is the path of least setup, but if you'd rather keep them separate,
+either create a second, free Neon project for development, or use Neon's **branching** feature to fork your
+production database into an isolated dev branch with its own connection string. A local Postgres (e.g. via Docker:
+`docker run -e POSTGRES_PASSWORD=dev -p 5432:5432 postgres:16`) also works — `DATABASE_URL` just needs to point at
+any reachable Postgres server; only a managed host like Neon additionally needs `sslmode=require` in the connection
+string, which is how `src/lib/db/pg.ts` decides whether to use TLS.
+
 ## Image uploads
 
 Every admin content form (Artists, Releases, Events, News) has an image field — click to upload a JPG/PNG/WebP/GIF
@@ -227,10 +281,25 @@ entirely, since it's just a per-request disk read rather than a static-asset loo
 upload → fetch immediately, same running server, no restart → 200. The route also strips path components from the
 filename before touching disk, so a request like `/uploads/../../.env` 404s instead of leaking files.
 
-**Same caveat as everything else file-based here:** this still writes to the local filesystem, so it won't persist
-on a serverless host with an ephemeral filesystem (e.g. Vercel) — same as `.data/*.json`. Before going live, swap
-the upload route for a real object storage provider (S3, Cloudinary, Vercel Blob, etc.); the response shape
-(`{ url }`) stays the same, so `ImageUpload.tsx` and every form using it won't need to change.
+**Deploying to Vercel — this is now handled automatically.** `/api/admin/upload` checks for a
+`BLOB_READ_WRITE_TOKEN` environment variable. If it's set, uploads go straight to
+[Vercel Blob](https://vercel.com/docs/storage/vercel-blob) (real, persistent object storage) and the response is
+the blob's own public CDN URL. If it's not set, the route falls back to the local-filesystem behavior described
+above, which is fine for local dev but **will not persist** on a serverless host with an ephemeral/read-only
+filesystem — every upload will fail there with a 500 error.
+
+To turn this on:
+
+1. In the Vercel dashboard, open the project → **Storage** → **Create Database** → **Blob**.
+2. Connect it to this project. Vercel automatically adds `BLOB_READ_WRITE_TOKEN` to the project's environment
+   variables — no manual copy-pasting needed.
+3. Redeploy. Uploads will now go to Blob storage automatically; nothing in the code needs to change, and
+   `ImageUpload.tsx` and every form using it are unaffected since the response shape (`{ url }`) is identical
+   either way.
+
+This only fixes image storage. The rest of the site's content (events, artists, releases, news, users, orders,
+tickets, settings) now lives in Postgres — see [Database](#database) above — so it's already persistent and
+doesn't need Blob or any other extra setup.
 
 ## Streaming links
 
@@ -297,14 +366,11 @@ didn't originally scope but were requested afterward.
    to Paystack's documented spec but were **not** exercised against the real API while building this — this sandbox
    can't reach `paystack.co`. Test with a real test-mode secret key before trusting it with real money.
 
-### The data layer — dev-only, replace before launch
+### The data layer
 
-Orders and tickets are stored as JSON files in `.data/` (gitignored) via `src/lib/ticketing/store.ts`. This is
-deliberately simple so the full flow works locally with zero setup, but it **will not work in production** on a
-serverless host like Vercel (the filesystem isn't shared or persistent across function invocations). This is
-exactly the piece the proposal's "Database" line item is for — before going live, swap `store.ts` for a real
-database (Postgres via Prisma/Drizzle, Supabase, etc.). Every function in that file is already `async`, so call
-sites elsewhere won't need to change.
+Orders and tickets are stored in Postgres via `src/lib/ticketing/store.ts` — see "Database" above for the
+connection, schema, and how to set up `DATABASE_URL`. This is exactly the piece the proposal's "Database" line item
+covers.
 
 ### Door verification (`/verify`)
 
@@ -334,9 +400,20 @@ without also being able to edit events/pricing, that'd be a good next role to ad
 
 - Only one admin role — see the door-verification note above about a lighter "staff" role for door scanning
   without full content-editing access.
-- The whole `db/` and `ticketing/` data layer, plus image uploads, are dev-only local filesystem storage, not
-  production-grade infrastructure — see "The data layer" and "Image uploads" above. This is the single biggest
-  thing to replace before this goes live for a real event.
+- The Postgres schema uses JSONB columns for most content types rather than a fully normalized relational schema —
+  see "How the data is modeled" under "Database" above for why that's a deliberate, honest choice and not a
+  shortcut, and how to normalize further if you need to later.
+- The Postgres migration (schema creation, every db/ and ticketing/ module, the full purchase → ticket →
+  verification loop, password reset, settings) was built and live-tested end-to-end against a real local Postgres
+  server, including killing the server process entirely and starting a fresh one on a different port afterward to
+  confirm data survives a real cold start rather than an in-memory cache — but it has **not** been exercised
+  against a real Neon database (no network access to neon.tech from the environment this was built in). Test
+  against your real Neon connection string before trusting it with a real event.
+- `next build` itself needs a reachable database (the root layout reads the logged-in user and site settings on
+  every page, and Next.js prerenders the built-in 404 page at build time) — `src/app/layout.tsx` sets
+  `export const dynamic = "force-dynamic"` specifically to avoid this, but confirm your `DATABASE_URL` is set as a
+  Vercel environment variable before deploying, not just added after the first deploy, or the build will fail with
+  a clear "DATABASE_URL is not set" error rather than a confusing one.
 - Paystack integration is written to spec but hasn't been exercised against the live API (no network access to
   `paystack.co` from the environment this was built in) — test with a real test-mode key before launch.
 - Google sign-in is likewise written to spec but not exercised live (no network access to Google's OAuth endpoints

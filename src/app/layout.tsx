@@ -23,6 +23,15 @@ const inter = localFont({
   weight: "100 900",
 });
 
+// Every page needs to know who's logged in (Header) and the live WhatsApp
+// widget config (getSettings()), both read from the database on every
+// request — so nothing under this layout can be statically generated.
+// Without this, Next.js still tries to prerender the built-in /_not-found
+// page at build time, which would require a reachable DATABASE_URL during
+// `next build` itself, not just at runtime. force-dynamic removes that
+// build-time database dependency entirely.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: {
     default: "BAE — Three Labels. One Movement.",

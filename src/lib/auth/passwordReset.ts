@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { readJson, writeJson, dataFile } from "@/lib/db/client";
+import { query } from "@/lib/db/pg";
 
 export interface PasswordResetToken {
   token: string;
@@ -9,33 +9,35 @@ export interface PasswordResetToken {
   createdAt: string;
 }
 
-const FILE = dataFile("password_resets.json");
 const TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
 
+interface Row {
+  user_id: string;
+  expires_at: string;
+  used: boolean;
+}
+
 export async function createResetToken(userId: string): Promise<string> {
-  const tokens = await readJson<PasswordResetToken>(FILE);
   const token = crypto.randomBytes(32).toString("hex");
-  tokens.push({
-    token,
-    userId,
-    expiresAt: new Date(Date.now() + TOKEN_TTL_MS).toISOString(),
-    used: false,
-    createdAt: new Date().toISOString(),
-  });
-  await writeJson(FILE, tokens);
+  const expiresAt = new Date(Date.now() + TOKEN_TTL_MS).toISOString();
+  const createdAt = new Date().toISOString();
+  await query(
+    `INSERT INTO password_reset_tokens (token, user_id, expires_at, used, created_at)
+     VALUES ($1, $2, $3, false, $4)`,
+    [token, userId, expiresAt, createdAt]
+  );
   return token;
 }
 
 export async function consumeResetToken(token: string): Promise<{ userId: string } | null> {
-  const tokens = await readJson<PasswordResetToken>(FILE);
-  const idx = tokens.findIndex((t) => t.token === token);
-  if (idx === -1) return null;
-
-  const entry = tokens[idx];
+  const rows = await query<Row>(`SELECT user_id, expires_at, used FROM password_reset_tokens WHERE token = $1`, [
+    token,
+  ]);
+  const entry = rows[0];
+  if (!entry) return null;
   if (entry.used) return null;
-  if (new Date(entry.expiresAt).getTime() < Date.now()) return null;
+  if (new Date(entry.expires_at).getTime() < Date.now()) return null;
 
-  tokens[idx] = { ...entry, used: true };
-  await writeJson(FILE, tokens);
-  return { userId: entry.userId };
+  await query(`UPDATE password_reset_tokens SET used = true WHERE token = $1`, [token]);
+  return { userId: entry.user_id };
 }

@@ -1,40 +1,38 @@
-import { readJson, writeJson, dataFile, newId } from "./client";
+import { query, newId } from "./pg";
 import { Release } from "@/lib/types";
 import { ensureSeeded } from "./seed";
 
-const FILE = dataFile("releases.json");
+interface Row {
+  data: Release;
+}
 
 export async function listReleases(): Promise<Release[]> {
   await ensureSeeded();
-  return readJson<Release>(FILE);
+  const rows = await query<Row>(`SELECT data FROM releases ORDER BY id`);
+  return rows.map((r) => r.data);
 }
 
 export async function getRelease(id: string): Promise<Release | undefined> {
   await ensureSeeded();
-  const releases = await readJson<Release>(FILE);
-  return releases.find((r) => r.id === id);
+  const rows = await query<Row>(`SELECT data FROM releases WHERE id = $1`, [id]);
+  return rows[0]?.data;
 }
 
 export async function createRelease(input: Omit<Release, "id">): Promise<Release> {
-  const releases = await readJson<Release>(FILE);
   const release: Release = { ...input, id: newId("release") };
-  releases.push(release);
-  await writeJson(FILE, releases);
+  await query(`INSERT INTO releases (id, data) VALUES ($1, $2)`, [release.id, JSON.stringify(release)]);
   return release;
 }
 
 export async function updateRelease(id: string, patch: Partial<Omit<Release, "id">>): Promise<Release | undefined> {
-  const releases = await readJson<Release>(FILE);
-  const idx = releases.findIndex((r) => r.id === id);
-  if (idx === -1) return undefined;
-  releases[idx] = { ...releases[idx], ...patch };
-  await writeJson(FILE, releases);
-  return releases[idx];
+  const existing = await getRelease(id);
+  if (!existing) return undefined;
+  const next: Release = { ...existing, ...patch };
+  await query(`UPDATE releases SET data = $2 WHERE id = $1`, [id, JSON.stringify(next)]);
+  return next;
 }
 
 export async function deleteRelease(id: string): Promise<boolean> {
-  const releases = await readJson<Release>(FILE);
-  const next = releases.filter((r) => r.id !== id);
-  await writeJson(FILE, next);
-  return next.length !== releases.length;
+  const rows = await query(`DELETE FROM releases WHERE id = $1 RETURNING id`, [id]);
+  return rows.length > 0;
 }

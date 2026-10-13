@@ -114,6 +114,7 @@ export const EVENTS: BaeEvent[] = [
     id: "e2", name: "AG20 Live in Lagos", day: "12", month: "JUL", fullDate: "Saturday, July 12, 2025", time: "Doors open 6:00 PM",
     city: "Lagos, Nigeria", venue: "Eko Convention Centre", labels: ["ag20", "elmayanaconcept"], status: "upcoming",
     description: "AG20's biggest headline show yet, with support from ElmayanaConcept's rising roster.",
+    imageUrl: "/images/ag20/ag20-live-lagos.png",
     tiers: [
       { name: "General Admission", price: 20000, fee: 1500, note: "Standing floor access" },
       { name: "VIP", price: 45000, fee: 2000, note: "Reserved seating, welcome drink" },
@@ -149,6 +150,7 @@ export const EVENTS: BaeEvent[] = [
     id: "e6", name: "AG20 Album Listening", day: "03", month: "MAY", fullDate: "Saturday, May 3, 2025", time: "Doors open 9:00 PM",
     city: "New York, NY", venue: "SOB's", labels: ["ag20"], status: "past",
     description: "First listen of 'Bloomfield' with Deshawn Cole and the AG20 family.",
+    imageUrl: "/images/ag20/ag20-album-listening.png",
     tiers: [],
   },
   {

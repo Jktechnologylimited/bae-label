@@ -1,112 +1,98 @@
-import { promises as fs } from "fs";
-import path from "path";
+import { query } from "@/lib/db/pg";
 import { Order, Ticket } from "./types";
 
 /**
- * MVP data layer — reads/writes JSON files on disk.
- *
- * This is intentionally simple so the full purchase → ticket → verification
- * flow works end-to-end locally without needing a database connection.
- *
- * IMPORTANT: this will NOT work on serverless hosts with an ephemeral or
- * read-only filesystem (e.g. Vercel). Before going live, swap this module
- * for a real database (Postgres via Prisma/Drizzle, Supabase, etc.) — this
- * is exactly what the "Database" line item in the infrastructure proposal
- * covers. Every function below is async already so the call sites won't
- * need to change when you do that swap.
+ * Real Postgres storage — see src/lib/db/pg.ts for the connection and
+ * schema setup. This used to be its own flat-JSON-file layer (same
+ * ephemeral-filesystem problem as everything else pre-migration); orders
+ * and tickets now live in real, persistent rows instead.
  */
 
-const DATA_DIR = path.join(process.cwd(), ".data");
-const ORDERS_FILE = path.join(DATA_DIR, "orders.json");
-const TICKETS_FILE = path.join(DATA_DIR, "tickets.json");
-
-async function ensureFile(file: string) {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  try {
-    await fs.access(file);
-  } catch {
-    await fs.writeFile(file, "[]", "utf-8");
-  }
+interface OrderRow {
+  data: Order;
 }
-
-async function readJson<T>(file: string): Promise<T[]> {
-  await ensureFile(file);
-  const raw = await fs.readFile(file, "utf-8");
-  try {
-    return JSON.parse(raw) as T[];
-  } catch {
-    return [];
-  }
-}
-
-async function writeJson<T>(file: string, data: T[]) {
-  await ensureFile(file);
-  await fs.writeFile(file, JSON.stringify(data, null, 2), "utf-8");
+interface TicketRow {
+  data: Ticket;
 }
 
 // ---- Orders ----
 
 export async function createOrder(order: Order): Promise<Order> {
-  const orders = await readJson<Order>(ORDERS_FILE);
-  orders.push(order);
-  await writeJson(ORDERS_FILE, orders);
+  await query(`INSERT INTO orders (id, user_id, paystack_reference, data) VALUES ($1, $2, $3, $4)`, [
+    order.id,
+    order.userId ?? null,
+    order.paystackReference ?? null,
+    JSON.stringify(order),
+  ]);
   return order;
 }
 
 export async function getOrder(id: string): Promise<Order | undefined> {
-  const orders = await readJson<Order>(ORDERS_FILE);
-  return orders.find((o) => o.id === id);
+  const rows = await query<OrderRow>(`SELECT data FROM orders WHERE id = $1`, [id]);
+  return rows[0]?.data;
 }
 
 export async function getOrderByReference(reference: string): Promise<Order | undefined> {
-  const orders = await readJson<Order>(ORDERS_FILE);
-  return orders.find((o) => o.paystackReference === reference);
+  const rows = await query<OrderRow>(`SELECT data FROM orders WHERE paystack_reference = $1`, [reference]);
+  return rows[0]?.data;
 }
 
 export async function updateOrder(id: string, patch: Partial<Order>): Promise<Order | undefined> {
-  const orders = await readJson<Order>(ORDERS_FILE);
-  const idx = orders.findIndex((o) => o.id === id);
-  if (idx === -1) return undefined;
-  orders[idx] = { ...orders[idx], ...patch };
-  await writeJson(ORDERS_FILE, orders);
-  return orders[idx];
+  const existing = await getOrder(id);
+  if (!existing) return undefined;
+  const next: Order = { ...existing, ...patch };
+  await query(`UPDATE orders SET user_id = $2, paystack_reference = $3, data = $4 WHERE id = $1`, [
+    id,
+    next.userId ?? null,
+    next.paystackReference ?? null,
+    JSON.stringify(next),
+  ]);
+  return next;
 }
 
 export async function listOrders(): Promise<Order[]> {
-  return readJson<Order>(ORDERS_FILE);
+  const rows = await query<OrderRow>(`SELECT data FROM orders ORDER BY id`);
+  return rows.map((r) => r.data);
 }
 
 export async function listOrdersByUser(userId: string): Promise<Order[]> {
-  const orders = await readJson<Order>(ORDERS_FILE);
-  return orders.filter((o) => o.userId === userId);
+  const rows = await query<OrderRow>(`SELECT data FROM orders WHERE user_id = $1 ORDER BY id`, [userId]);
+  return rows.map((r) => r.data);
 }
 
 // ---- Tickets ----
 
 export async function createTickets(tickets: Ticket[]): Promise<Ticket[]> {
-  const all = await readJson<Ticket>(TICKETS_FILE);
-  all.push(...tickets);
-  await writeJson(TICKETS_FILE, all);
+  for (const ticket of tickets) {
+    await query(`INSERT INTO tickets (code, order_id, data) VALUES ($1, $2, $3)`, [
+      ticket.code,
+      ticket.orderId,
+      JSON.stringify(ticket),
+    ]);
+  }
   return tickets;
 }
 
 export async function getTicket(code: string): Promise<Ticket | undefined> {
-  const tickets = await readJson<Ticket>(TICKETS_FILE);
-  return tickets.find((t) => t.code === code);
+  const rows = await query<TicketRow>(`SELECT data FROM tickets WHERE code = $1`, [code]);
+  return rows[0]?.data;
 }
 
 export async function getTicketsByOrder(orderId: string): Promise<Ticket[]> {
-  const tickets = await readJson<Ticket>(TICKETS_FILE);
-  return tickets.filter((t) => t.orderId === orderId);
+  const rows = await query<TicketRow>(`SELECT data FROM tickets WHERE order_id = $1`, [orderId]);
+  return rows.map((r) => r.data);
 }
 
 export async function updateTicket(code: string, patch: Partial<Ticket>): Promise<Ticket | undefined> {
-  const tickets = await readJson<Ticket>(TICKETS_FILE);
-  const idx = tickets.findIndex((t) => t.code === code);
-  if (idx === -1) return undefined;
-  tickets[idx] = { ...tickets[idx], ...patch };
-  await writeJson(TICKETS_FILE, tickets);
-  return tickets[idx];
+  const existing = await getTicket(code);
+  if (!existing) return undefined;
+  const next: Ticket = { ...existing, ...patch };
+  await query(`UPDATE tickets SET order_id = $2, data = $3 WHERE code = $1`, [
+    code,
+    next.orderId,
+    JSON.stringify(next),
+  ]);
+  return next;
 }
 
 export async function voidTicket(code: string): Promise<Ticket | undefined> {
@@ -114,14 +100,13 @@ export async function voidTicket(code: string): Promise<Ticket | undefined> {
 }
 
 export async function deleteTicket(code: string): Promise<boolean> {
-  const tickets = await readJson<Ticket>(TICKETS_FILE);
-  const next = tickets.filter((t) => t.code !== code);
-  await writeJson(TICKETS_FILE, next);
-  return next.length !== tickets.length;
+  const rows = await query(`DELETE FROM tickets WHERE code = $1 RETURNING code`, [code]);
+  return rows.length > 0;
 }
 
 export async function listTickets(): Promise<Ticket[]> {
-  return readJson<Ticket>(TICKETS_FILE);
+  const rows = await query<TicketRow>(`SELECT data FROM tickets ORDER BY code`);
+  return rows.map((r) => r.data);
 }
 
 /**

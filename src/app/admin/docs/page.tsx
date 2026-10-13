@@ -189,11 +189,12 @@ export default function AdminDocsPage() {
               appears on the public site, immediately. Click <strong className="text-paper">Replace Image</strong>{" "}
               to swap it, or the small × in the corner of the preview to remove it.
             </p>
-            <DocTip variant="warning">
-              Uploaded images are stored on the server this app runs on. If you move the site to a different host or
-              a serverless platform later, ask whoever manages the deployment whether uploads need to move to
-              proper file storage first — see the README&apos;s &ldquo;Image uploads&rdquo; section for the
-              technical detail.
+            <DocTip>
+              On a production deployment with a Blob storage connection set up (see the README&apos;s
+              &ldquo;Image uploads&rdquo; section), uploaded images go straight to persistent cloud storage and are
+              safe. Without that connected, uploads are saved to the server&apos;s own disk instead — fine for
+              local development, but ask whoever manages the deployment to confirm Blob storage is connected before
+              relying on uploads in production.
             </DocTip>
           </DocSection>
 

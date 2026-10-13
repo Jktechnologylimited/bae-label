@@ -33,8 +33,26 @@ export default function ImageUpload({
       const formData = new FormData();
       formData.append("file", file);
       const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Upload failed.");
+
+      // The server is expected to always return JSON, but a crashed function,
+      // a host's reverse proxy, or a request-size limit can return an empty
+      // body or an HTML error page instead. Guard against that so the person
+      // sees a real, readable error instead of a raw JSON-parse exception.
+      const raw = await res.text();
+      let json: { url?: string; error?: string } = {};
+      if (raw) {
+        try {
+          json = JSON.parse(raw);
+        } catch {
+          throw new Error(
+            `Upload failed (server returned ${res.status} ${res.statusText || ""}, not JSON). ` +
+              "This usually means the image storage isn't set up for how this site is hosted " +
+              "— see the README's Image Uploads section."
+          );
+        }
+      }
+      if (!res.ok) throw new Error(json.error ?? `Upload failed (${res.status}).`);
+      if (!json.url) throw new Error("Upload succeeded but the server didn't return an image URL.");
       onChange(json.url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed.");

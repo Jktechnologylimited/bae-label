@@ -1,40 +1,38 @@
-import { readJson, writeJson, dataFile, newId } from "./client";
+import { query, newId } from "./pg";
 import { Artist } from "@/lib/types";
 import { ensureSeeded } from "./seed";
 
-const FILE = dataFile("artists.json");
+interface Row {
+  data: Artist;
+}
 
 export async function listArtists(): Promise<Artist[]> {
   await ensureSeeded();
-  return readJson<Artist>(FILE);
+  const rows = await query<Row>(`SELECT data FROM artists ORDER BY id`);
+  return rows.map((r) => r.data);
 }
 
 export async function getArtist(id: string): Promise<Artist | undefined> {
   await ensureSeeded();
-  const artists = await readJson<Artist>(FILE);
-  return artists.find((a) => a.id === id);
+  const rows = await query<Row>(`SELECT data FROM artists WHERE id = $1`, [id]);
+  return rows[0]?.data;
 }
 
 export async function createArtist(input: Omit<Artist, "id">): Promise<Artist> {
-  const artists = await readJson<Artist>(FILE);
   const artist: Artist = { ...input, id: newId("artist") };
-  artists.push(artist);
-  await writeJson(FILE, artists);
+  await query(`INSERT INTO artists (id, data) VALUES ($1, $2)`, [artist.id, JSON.stringify(artist)]);
   return artist;
 }
 
 export async function updateArtist(id: string, patch: Partial<Omit<Artist, "id">>): Promise<Artist | undefined> {
-  const artists = await readJson<Artist>(FILE);
-  const idx = artists.findIndex((a) => a.id === id);
-  if (idx === -1) return undefined;
-  artists[idx] = { ...artists[idx], ...patch };
-  await writeJson(FILE, artists);
-  return artists[idx];
+  const existing = await getArtist(id);
+  if (!existing) return undefined;
+  const next: Artist = { ...existing, ...patch };
+  await query(`UPDATE artists SET data = $2 WHERE id = $1`, [id, JSON.stringify(next)]);
+  return next;
 }
 
 export async function deleteArtist(id: string): Promise<boolean> {
-  const artists = await readJson<Artist>(FILE);
-  const next = artists.filter((a) => a.id !== id);
-  await writeJson(FILE, next);
-  return next.length !== artists.length;
+  const rows = await query(`DELETE FROM artists WHERE id = $1 RETURNING id`, [id]);
+  return rows.length > 0;
 }
