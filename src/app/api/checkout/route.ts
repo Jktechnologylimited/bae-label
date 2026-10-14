@@ -5,6 +5,7 @@ import { getUserByEmail, createUser } from "@/lib/db/users";
 import { getCurrentUser } from "@/lib/auth/session";
 import { createOrder, generateOrderId, updateOrder } from "@/lib/ticketing/store";
 import { initializeTransaction } from "@/lib/ticketing/paystack";
+import { getSettings } from "@/lib/db/settings";
 import { MAX_PER_TIER, MAX_TICKETS_PER_ORDER, MAX_TIER_LINES, itemsAmountKobo } from "@/lib/ticketing/amounts";
 import { Order, OrderItem } from "@/lib/ticketing/types";
 import { siteBaseUrl } from "@/lib/site";
@@ -141,12 +142,16 @@ export async function POST(req: NextRequest) {
     await createOrder(order);
 
     const callbackUrl = `${baseUrl}/tickets/confirm?order=${encodeURIComponent(orderId)}`;
+    // When a subaccount is configured, Paystack splits this payment at
+    // settlement — the ticket money never passes through this account.
+    const settings = await getSettings();
     const init = await initializeTransaction({
       email: buyerEmail,
       amountKobo: totalKobo,
       reference: `${orderId}-${Date.now()}`,
       callbackUrl,
       metadata: { orderId, eventId },
+      subaccount: settings.paystackSubaccountCode,
     });
 
     await updateOrder(orderId, { paystackReference: init.reference });

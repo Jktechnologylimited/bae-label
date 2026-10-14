@@ -438,6 +438,57 @@ configures or needs to know about it — the app never sees the payout account. 
 Paystack validates the settlement account **name** against your registered business name for compliance, so a mismatch
 between `A.G.Twenty` and your Paystack business profile is the one thing that can delay or reject the setup.
 
+---
+
+# Sixth pass — split payments (Paystack subaccounts)
+
+Situation: the Paystack account belongs to **JK Technology Limited** (the platform's developer), but ticket revenue
+should settle to **A.G.Twenty, Sterling Bank ••••8515**, and JKTL keeps **0%**. That is Paystack's split-payment
+model, so it's now built into the app.
+
+## What was built
+
+| Piece | What it does |
+|---|---|
+| `paystack.ts` | New `listBanks()`, `resolveAccount()`, `createSubaccount()`, and a shared `paystackRequest()` helper. `initializeTransaction()` takes an optional `subaccount`. |
+| `api/admin/paystack/banks` | Bank list for the dropdown (admin-only; returns 400 if no secret key rather than inventing data). |
+| `api/admin/paystack/subaccount` | `POST` resolves the account, creates the subaccount, stores it. `DELETE` stops splitting. Admin-only, rate-limited, validates bank code / 10-digit NUBAN / 0–100 percentage. |
+| `api/checkout` | Passes the stored subaccount to Paystack, so the split happens at settlement. |
+| `/admin/settings` | New **Ticket payouts** section: Paystack mode indicator, bank dropdown, account number, percentage, current-payout summary, and a "stop splitting" action. |
+| `settings.ts` | Five new optional fields. **`normalizeSettings` now carries them through** — without that, saving the WhatsApp settings would have silently dropped the subaccount and quietly stopped splitting. |
+
+## Verified at runtime — 13/13 checks
+
+| Check | Result |
+|---|---|
+| Bank list requires a session / creation requires a session | 403 |
+| Bank list from Paystack | 289 banks, Sterling Bank = code `232` |
+| Bad bank code / 9-digit account / 150% | 400 |
+| **Account resolution for `••••8515`** | **`"A.G.TWENTY"`** — the account is real and correctly named |
+| Subaccount created (test mode) | `ACCT_…` (redacted), main account keeps 0% |
+| Subaccount survives an unrelated settings save | still present (the normalization trap is closed) |
+| Checkout initializes with the split configured | HTTP 200, Paystack URL returned |
+| Split can be stopped; code cleared | 200, settings emptied |
+| Final database state | 1 admin, 0 orders, 0 tickets, WhatsApp settings unchanged |
+
+## Two things you must do before taking real payments
+
+1. **Re-create the payout account with your LIVE key.** The subaccount created during testing lives in the *test*
+   integration and will not work in live mode — checkout would fail with an invalid subaccount. The settings page now
+   shows "Paystack mode: TEST" and warns about exactly this. The test subaccount remains in your Paystack test
+   dashboard (harmless).
+2. **Run one small live transaction** and confirm the split direction. Paystack documents `percentage_charge` only as
+   "the default percentage charged when receiving on behalf of this subaccount" — which reads both ways. One real
+   transaction settles it, and it's far better to learn it on ₦100 than on a sold-out show.
+
+## One recommendation I'll restate once
+
+At **0%**, JKTL is in the payment path for no commercial reason, and it carries the merchant-of-record exposure:
+disputes and refunds on BAE's tickets land on JKTL, and customers see JKTL on their card statement for a BAE event.
+BAE holding its own Paystack account removes both problems, needs no split at all, and is a key swap rather than a
+rewrite. The subaccount is ready either way.
+
+
 
 
 

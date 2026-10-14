@@ -5,6 +5,24 @@ export interface SiteSettings {
   whatsappNumber: string; // digits only, country code first, e.g. "2348012345678"
   whatsappGreeting: string;
   whatsappQuickReplies: string[];
+
+  /**
+   * Paystack split-payment configuration. Set by the "Create subaccount" flow
+   * in /admin/settings, not typed in by hand — the code only exists after
+   * Paystack has accepted the bank account, and it is environment-specific
+   * (a subaccount created with a test key will NOT work with a live key).
+   *
+   * When `paystackSubaccountCode` is set, every ticket payment is split: the
+   * subaccount's share settles straight to its bank account.
+   */
+  paystackSubaccountCode?: string;
+  /** Account name the bank returned, for display/confirmation. */
+  paystackSubaccountName?: string;
+  /** Last 4 digits only — never store the full account number. */
+  paystackSubaccountAccountLast4?: string;
+  paystackSubaccountBankName?: string;
+  /** Share the MAIN Paystack account keeps. 0 = everything settles to the subaccount. */
+  paystackSubaccountPercentage?: number;
 }
 
 export const DEFAULT_SETTINGS: SiteSettings = {
@@ -43,7 +61,7 @@ export function normalizeSettings(stored: unknown): SiteSettings {
   if (typeof stored !== "object" || stored === null || Array.isArray(stored)) return DEFAULT_SETTINGS;
   const raw = stored as Record<string, unknown>;
 
-  return {
+  const settings: SiteSettings = {
     whatsappEnabled: typeof raw.whatsappEnabled === "boolean" ? raw.whatsappEnabled : DEFAULT_SETTINGS.whatsappEnabled,
     whatsappNumber:
       typeof raw.whatsappNumber === "string" && /^\d{8,15}$/.test(raw.whatsappNumber)
@@ -58,6 +76,25 @@ export function normalizeSettings(stored: unknown): SiteSettings {
         ? (raw.whatsappQuickReplies as string[]).slice(0, MAX_REPLIES).map((r) => r.slice(0, MAX_REPLY))
         : DEFAULT_SETTINGS.whatsappQuickReplies,
   };
+
+  // Carry the Paystack split configuration through every read. Without this,
+  // saving the WhatsApp settings would re-normalise from the defaults and
+  // silently drop the subaccount — which would quietly stop splitting payments.
+  if (typeof raw.paystackSubaccountCode === "string" && raw.paystackSubaccountCode.trim() !== "") {
+    settings.paystackSubaccountCode = raw.paystackSubaccountCode.trim();
+    if (typeof raw.paystackSubaccountName === "string") settings.paystackSubaccountName = raw.paystackSubaccountName;
+    if (typeof raw.paystackSubaccountBankName === "string") {
+      settings.paystackSubaccountBankName = raw.paystackSubaccountBankName;
+    }
+    if (typeof raw.paystackSubaccountAccountLast4 === "string") {
+      settings.paystackSubaccountAccountLast4 = raw.paystackSubaccountAccountLast4;
+    }
+    if (typeof raw.paystackSubaccountPercentage === "number" && Number.isFinite(raw.paystackSubaccountPercentage)) {
+      settings.paystackSubaccountPercentage = raw.paystackSubaccountPercentage;
+    }
+  }
+
+  return settings;
 }
 
 /**

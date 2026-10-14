@@ -386,6 +386,34 @@ didn't originally scope but were requested afterward.
    to Paystack's documented spec but were **not** exercised against the real API while building this — this sandbox
    can't reach `paystack.co`. Test with a real test-mode secret key before trusting it with real money.
 
+### Paying ticket revenue into a different bank account (subaccounts)
+
+If the Paystack account belongs to one company but the ticket money should settle to another (for example the
+platform owner's account vs the label's), use a Paystack **subaccount** — nothing manual, no transfers between
+accounts, and the money never sits in the wrong account in between.
+
+Go to **`/admin/settings` → Ticket payouts**, pick the bank, enter the 10-digit account number, and set the
+percentage the *main* Paystack account keeps (`0` means everything settles to the payout account). The account name
+is resolved with Paystack before the subaccount is created, so a typo fails there instead of paying the wrong bank
+account. Once saved, every new ticket payment is split automatically.
+
+Things to know before relying on it:
+
+- **Subaccount codes are environment-specific.** One created with a test key will **not** work once a live key is in
+  place — checkout fails with an invalid subaccount. The settings page shows which mode you're connected in and warns
+  you about this. **Set the payout account up again after switching to your live key.**
+- **Whose name is on the customer's card statement?** With a subaccount on someone else's Paystack account, that
+  account holder is the merchant of record: they appear on the statement, and disputes/refunds land on them. If the
+  split is 0% and there's no commercial reason for it, the cleaner arrangement is for the business selling the tickets
+  to hold its own Paystack account — the split then isn't needed at all.
+- **`percentage_charge` is documented ambiguously** by Paystack ("the default percentage charged when receiving on
+  behalf of this subaccount"). Confirm the direction with one small live transaction before trusting it with real
+  ticket revenue.
+- **Paystack's own processing fee** is charged separately from the split; check who bears it on that same test
+  transaction.
+- The admin dashboard's revenue figure sums **gross** order totals, so with a split it shows total ticket revenue
+  rather than what the main account actually keeps.
+
 ### The data layer
 
 Orders and tickets are stored in Postgres via `src/lib/ticketing/store.ts` — see "Database" above for the
