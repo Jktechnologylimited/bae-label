@@ -2,10 +2,28 @@ import { query } from "./pg";
 import { createUser, listUsers } from "./users";
 import { EVENTS, ARTISTS, RELEASES, NEWS } from "@/lib/data";
 
-const DEFAULT_ADMIN_EMAIL = "admin@bae.band";
-const DEFAULT_ADMIN_PASSWORD = "BaeAdmin!2026";
-
 let seededPromise: Promise<void> | undefined;
+
+/**
+ * The bootstrap admin always comes from the environment.
+ *
+ * There is deliberately no hardcoded fallback account: this repository used to
+ * ship `admin@bae.band` / `BaeAdmin!2026`, which meant that anyone who could
+ * read the source (or the README, which printed it) knew the admin password of
+ * any deployment that had not been changed by hand.
+ */
+function resolveBootstrapAdmin(): { email: string; password: string } | null {
+  const email = process.env.ADMIN_EMAIL?.trim();
+  const password = process.env.ADMIN_PASSWORD;
+  if (email && password) return { email, password };
+
+  console.error(
+    "[seed] There is no admin account and ADMIN_EMAIL/ADMIN_PASSWORD are not set, so none was created. " +
+      "Set both in your environment (see .env.example) and restart — they are required in every " +
+      "environment, not just production."
+  );
+  return null;
+}
 
 /**
  * Idempotent, cheap to call often — seeds the initial admin account (only if
@@ -28,16 +46,26 @@ async function doSeed() {
   const users = await listUsers();
   const hasAdmin = users.some((u) => u.role === "admin");
   if (!hasAdmin) {
-    await createUser({
-      name: "BAE Admin",
-      email: DEFAULT_ADMIN_EMAIL,
-      password: DEFAULT_ADMIN_PASSWORD,
-      role: "admin",
-    });
-    console.log(
-      `[seed] Created default admin account — email: ${DEFAULT_ADMIN_EMAIL}  password: ${DEFAULT_ADMIN_PASSWORD}\n` +
-        `[seed] Log in at /login and change this password immediately (see /account).`
-    );
+    const bootstrap = resolveBootstrapAdmin();
+    if (bootstrap) {
+      try {
+        await createUser({
+          name: "BAE Admin",
+          email: bootstrap.email,
+          password: bootstrap.password,
+          role: "admin",
+        });
+        console.log(
+          `[seed] Created admin account — email: ${bootstrap.email}\n` +
+            `[seed] Log in at /login and change this password immediately (see /account).`
+        );
+      } catch (err) {
+        // A second cold-starting instance can win the race; the unique
+        // constraint on email is the real guard, so treat that as success
+        // rather than failing this request with a 500.
+        console.warn("[seed] admin account was created concurrently by another instance; continuing.", err);
+      }
+    }
   }
 
   // Seed the catalog content from what used to be the static EVENTS /
@@ -60,13 +88,4 @@ async function seedTable(table: "events" | "artists" | "releases" | "news", rows
       JSON.stringify(row),
     ]);
   }
-}
-
-export async function isFirstAdminStillDefault(): Promise<boolean> {
-  const users = await listUsers();
-  const admin = users.find((u) => u.email === DEFAULT_ADMIN_EMAIL && u.role === "admin");
-  if (!admin) return false;
-  // We can't reverse the hash, so this just tells the UI "this account was
-  // seeded" — used to show a one-time reminder banner, not a security check.
-  return true;
 }

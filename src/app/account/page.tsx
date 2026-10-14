@@ -4,12 +4,14 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { ArrowRight, Calendar, MapPin, Ticket as TicketIcon, User as UserIcon } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/session";
-import { listOrdersByUser, getTicketsByOrder } from "@/lib/ticketing/store";
-import { getEvent } from "@/lib/db/events";
+import { listOrdersByUser, getTicketsByOrderIds } from "@/lib/ticketing/store";
+import { listEvents } from "@/lib/db/events";
 import { generateTicketQr } from "@/lib/ticketing/qr";
+import { siteBaseUrl } from "@/lib/site";
 import { formatNaira } from "@/lib/data";
 import LogoutButton from "@/components/auth/LogoutButton";
 import ChangePasswordForm from "./ChangePasswordForm";
+import RecoveryEmailForm from "./RecoveryEmailForm";
 
 export const metadata: Metadata = { title: "My Account" };
 
@@ -19,16 +21,26 @@ export default async function AccountPage() {
 
   const orders = (await listOrdersByUser(user.id)).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
+  const baseUrl = await siteBaseUrl();
+
+  // Two queries total rather than two per order: all tickets for every order in
+  // one round trip, and the event catalogue once (it's small) keyed by id.
+  const [ticketsByOrder, allEvents] = await Promise.all([
+    getTicketsByOrderIds(orders.map((o) => o.id)),
+    listEvents(),
+  ]);
+  const eventsById = new Map(allEvents.map((e) => [e.id, e]));
+
   const ordersWithDetails = await Promise.all(
     orders.map(async (order) => {
-      const [tickets, event] = await Promise.all([getTicketsByOrder(order.id), getEvent(order.eventId)]);
+      const tickets = ticketsByOrder.get(order.id) ?? [];
       const ticketsWithQr = await Promise.all(
         tickets.map(async (t) => ({
           ...t,
-          qrDataUrl: await generateTicketQr(t.code, process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+          qrDataUrl: await generateTicketQr(t.code, baseUrl),
         }))
       );
-      return { order, tickets: ticketsWithQr, event };
+      return { order, tickets: ticketsWithQr, event: eventsById.get(order.eventId) };
     })
   );
 
@@ -151,10 +163,24 @@ export default async function AccountPage() {
       </section>
 
       <section className="mx-auto max-w-4xl px-6 pb-16 lg:px-10">
-        <h2 className="font-display text-lg font-black uppercase tracking-tight">Password</h2>
-        <div className="mt-4 max-w-sm">
+        <h2 className="font-display text-lg font-black uppercase tracking-tight">Password &amp; Security</h2>
+        <div className="mt-4 max-w-sm space-y-8">
           {user.passwordHash ? (
-            <ChangePasswordForm />
+            <>
+              <ChangePasswordForm />
+              <div>
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-onlight">
+                  Recovery email
+                </h3>
+                <p className="mt-2 text-xs leading-relaxed text-muted-onlight">
+                  If you forget your password, the reset link is sent to this address instead of your sign-in
+                  address. Point it at a mailbox you can always get into — it&apos;s how you get back in.
+                </p>
+                <div className="mt-3">
+                  <RecoveryEmailForm current={user.recoveryEmail ?? ""} />
+                </div>
+              </div>
+            </>
           ) : (
             <div className="border border-black/10 bg-paper-soft p-4 text-sm text-muted-onlight">
               You signed in with Google, so there&apos;s no password on this account yet.{" "}

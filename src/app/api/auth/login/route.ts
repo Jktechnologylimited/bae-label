@@ -4,8 +4,14 @@ import { verifyPassword } from "@/lib/auth/password";
 import { setSessionCookie } from "@/lib/auth/session";
 import { toSafeUser } from "@/lib/db/schema";
 import { ensureSeeded } from "@/lib/db/seed";
+import { enforceRateLimit } from "@/lib/rateLimit";
 
 export async function POST(req: NextRequest) {
+  // No account lockout by design (that would let an attacker deny a known
+  // account access); per-IP limiting still stops scripted credential stuffing.
+  const limited = enforceRateLimit(req, "login", 10, 15 * 60 * 1000);
+  if (limited) return limited;
+
   try {
     await ensureSeeded();
     const { email, password } = await req.json();
@@ -31,7 +37,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Incorrect email or password." }, { status: 401 });
     }
 
-    await setSessionCookie(user.id, user.role);
+    await setSessionCookie(user.id, user.role, user.sessionVersion);
     return NextResponse.json({ user: toSafeUser(user) });
   } catch (err) {
     console.error("[login] error", err);

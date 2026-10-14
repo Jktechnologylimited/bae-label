@@ -43,6 +43,7 @@ export default function NewsletterForm({
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          aria-label="Email address"
           placeholder={placeholder}
           className={
             isLight

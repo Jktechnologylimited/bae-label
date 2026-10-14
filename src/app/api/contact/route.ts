@@ -1,15 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { enforceRateLimit } from "@/lib/rateLimit";
 
 export async function POST(req: NextRequest) {
+  // Unauthenticated endpoint that sends mail — without this it is an open
+  // relay into the site owner's inbox.
+  const limited = enforceRateLimit(req, "contact", 5, 60 * 60 * 1000);
+  if (limited) return limited;
+
   try {
     const { name, email, subject, message } = await req.json();
 
     if (!name || !email || !subject || !message) {
       return NextResponse.json({ error: "All fields are required." }, { status: 400 });
     }
+    if (typeof name !== "string" || typeof email !== "string" || typeof subject !== "string" || typeof message !== "string") {
+      return NextResponse.json({ error: "All fields are required." }, { status: 400 });
+    }
     if (!/^\S+@\S+\.\S+$/.test(email)) {
       return NextResponse.json({ error: "A valid email is required." }, { status: 400 });
+    }
+    if (name.length > 120 || email.length > 254 || subject.length > 200 || message.length > 5000) {
+      return NextResponse.json({ error: "That message is too long — please shorten it and try again." }, { status: 400 });
     }
 
     const apiKey = process.env.RESEND_API_KEY;

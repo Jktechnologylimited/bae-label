@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import { siteBaseUrl } from "@/lib/site";
+import { safeNextPath } from "@/lib/navigation";
+import { enforceRateLimit } from "@/lib/rateLimit";
 
 /**
  * Starts the Google OAuth 2.0 authorization-code flow. Redirects the
@@ -15,6 +18,9 @@ import crypto from "crypto";
  * silently redirecting somewhere broken.
  */
 export async function GET(req: NextRequest) {
+  const limited = enforceRateLimit(req, "google-oauth-start", 20, 10 * 60 * 1000);
+  if (limited) return limited;
+
   const clientId = process.env.GOOGLE_CLIENT_ID;
   if (!clientId) {
     const loginUrl = new URL("/login", req.url);
@@ -22,15 +28,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? req.nextUrl.origin;
+  const baseUrl = await siteBaseUrl();
   const redirectUri = `${baseUrl}/api/auth/google/callback`;
 
   // CSRF protection: a random value we can verify came back unmodified.
   const state = crypto.randomBytes(24).toString("hex");
 
   // Where to send the user after a successful login — preserved through the
-  // round trip via the state cookie's paired "next" value.
-  const next = req.nextUrl.searchParams.get("next") ?? "/account";
+  // round trip via the state cookie's paired "next" value. Validated here so a
+  // hostile `next` is never stored, and again at the callback.
+  const next = safeNextPath(req.nextUrl.searchParams.get("next"));
 
   const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   authUrl.searchParams.set("client_id", clientId);

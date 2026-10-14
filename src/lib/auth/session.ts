@@ -8,8 +8,8 @@ export { verifySessionToken } from "./token";
 
 // ---- Server Component / Route Handler helpers (Node runtime, uses next/headers) ----
 
-export async function setSessionCookie(userId: string, role: "admin" | "customer") {
-  const token = await createSessionCookieValue(userId, role);
+export async function setSessionCookie(userId: string, role: "admin" | "customer", sessionVersion = 1) {
+  const token = await createSessionCookieValue(userId, role, sessionVersion);
   const store = await cookies();
   store.set(COOKIE_NAME, token, {
     httpOnly: true,
@@ -33,5 +33,9 @@ export async function getCurrentUser(): Promise<User | null> {
   const payload = await verifySessionToken(token);
   if (!payload) return null;
   const user = await getUserById(payload.userId);
-  return user ?? null;
+  if (!user) return null;
+  // Sessions issued before the account's current password are no longer valid
+  // (tokens minted before this field existed carry no `ver` and count as 1).
+  if ((payload.ver ?? 1) !== user.sessionVersion) return null;
+  return user;
 }

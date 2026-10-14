@@ -13,14 +13,23 @@ export interface User {
   googleId?: string;
   avatarUrl?: string;
   createdAt: string;
+  /** Bumped whenever the password changes; sessions carry the value they were
+   * issued with, so changing a password invalidates older sessions. */
+  sessionVersion: number;
+  /** Optional alternate address for password-reset emails, when the primary
+   * address can't receive mail. Set from /account. */
+  recoveryEmail?: string;
 }
 
-// Public shape safe to send to the client / render in JSX (no password hash).
-export type SafeUser = Omit<User, "passwordHash">;
+// Public shape safe to send to the client / render in JSX (no password hash,
+// no internal session bookkeeping, and no recovery address).
+export type SafeUser = Omit<User, "passwordHash" | "sessionVersion" | "recoveryEmail">;
 
 export function toSafeUser(user: User): SafeUser {
   const safe = { ...user } as Partial<User>;
   delete safe.passwordHash;
+  delete safe.sessionVersion;
+  delete safe.recoveryEmail;
   return safe as SafeUser;
 }
 

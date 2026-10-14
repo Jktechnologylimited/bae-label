@@ -38,6 +38,7 @@ export default function ChangePasswordForm() {
         value={currentPassword}
         onChange={(e) => setCurrentPassword(e.target.value)}
         placeholder="Current password"
+        aria-label="Current password"
         className="w-full border border-black/15 bg-white px-4 py-3 text-sm focus:outline-none focus:border-ink"
       />
       <input
@@ -47,6 +48,7 @@ export default function ChangePasswordForm() {
         value={newPassword}
         onChange={(e) => setNewPassword(e.target.value)}
         placeholder="New password (min 8 characters)"
+        aria-label="New password (minimum 8 characters)"
         className="w-full border border-black/15 bg-white px-4 py-3 text-sm focus:outline-none focus:border-ink"
       />
       {error && <p className="text-xs font-medium text-bigdrip">{error}</p>}

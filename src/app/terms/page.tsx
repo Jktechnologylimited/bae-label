@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { FileCheck2 } from "lucide-react";
 import LegalLayout, { LegalSection } from "@/components/legal/LegalLayout";
+import { CONTACT_EMAIL, emailOrForm } from "@/lib/contact";
 
 export const metadata: Metadata = {
   title: "Terms & Conditions",
@@ -92,7 +93,7 @@ const sections: LegalSection[] = [
   {
     id: "contact",
     title: "Contact Us",
-    body: <p>If you have any questions about these Terms &amp; Conditions, please contact us at info@bae.band or +1 (234) 567-8900.</p>,
+    body: <p>If you have any questions about these Terms &amp; Conditions, please {emailOrForm(CONTACT_EMAIL)}.</p>,
   },
 ];
 
@@ -105,7 +106,7 @@ export default function TermsPage() {
       description="Please read these Terms and Conditions carefully before using our website and services."
       lastUpdated="August 16, 2026"
       sections={sections}
-      contactEmail="info@bae.band"
+      contactEmail={CONTACT_EMAIL}
     />
   );
 }

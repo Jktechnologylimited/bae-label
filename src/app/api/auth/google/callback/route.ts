@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserByEmail, getUserByGoogleId, createUser, updateUser } from "@/lib/db/users";
 import { setSessionCookie } from "@/lib/auth/session";
+import { siteBaseUrl } from "@/lib/site";
+import { safeNextPath } from "@/lib/navigation";
 
 interface GoogleTokenResponse {
   access_token: string;
@@ -52,7 +54,7 @@ export async function GET(req: NextRequest) {
   }
   if (returnedState !== expectedState) return fail(req, "google_state_mismatch");
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? req.nextUrl.origin;
+  const baseUrl = await siteBaseUrl();
   const redirectUri = `${baseUrl}/api/auth/google/callback`;
 
   try {
@@ -86,6 +88,11 @@ export async function GET(req: NextRequest) {
 
     if (!profile.email) return fail(req, "google_no_email");
 
+    // Only trust an address Google says it has verified. Without this, an
+    // unverified Google address could be used to link to — and then sign in
+    // as — an existing password account with the same email.
+    if (profile.email_verified !== true) return fail(req, "google_email_unverified");
+
     // Find-or-create: match by googleId first (repeat sign-ins), then by
     // email (an existing password account signing in with Google for the
     // first time gets linked rather than duplicated).
@@ -106,9 +113,9 @@ export async function GET(req: NextRequest) {
     }
     if (!user) return fail(req, "google_account_error");
 
-    await setSessionCookie(user.id, user.role);
+    await setSessionCookie(user.id, user.role, user.sessionVersion);
 
-    const redirectTo = new URL(user.role === "admin" ? "/admin" : next || "/account", req.url);
+    const redirectTo = new URL(user.role === "admin" ? "/admin" : safeNextPath(next), req.url);
     const res = NextResponse.redirect(redirectTo);
     res.cookies.delete("google_oauth_state");
     return res;

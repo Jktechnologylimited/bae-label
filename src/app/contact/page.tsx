@@ -1,28 +1,57 @@
 import type { Metadata } from "next";
-import { Headphones, Mail, MapPin, Phone, Send, ArrowRight } from "lucide-react";
+import { Headphones, Mail, MapPin, Phone, Send, ArrowRight, LucideIcon } from "lucide-react";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import Accordion from "@/components/ui/Accordion";
 import Placeholder from "@/components/ui/Placeholder";
 import ContactForm from "./ContactForm";
+import { CONTACT_EMAIL, PRESS_EMAIL, SUBMISSIONS_EMAIL, published } from "@/lib/contact";
 
 export const metadata: Metadata = {
   title: "Contact Us",
   description: "Get in touch with the BAE team — questions, collaborations, partnerships and more.",
 };
 
-const REACH = [
-  { icon: Mail, title: "Email", lines: ["info@bae.band"], note: "Drop us an email anytime." },
+interface ReachItem {
+  icon: LucideIcon;
+  title: string;
+  lines: string[];
+  note: string;
+}
+
+// Email and press only appear when an address is actually configured — see
+// src/lib/contact.ts. Everything else (phone, address) is placeholder copy.
+const REACH: ReachItem[] = [
+  ...(published(CONTACT_EMAIL)
+    ? [{ icon: Mail, title: "Email", lines: [CONTACT_EMAIL], note: "Drop us an email anytime." }]
+    : []),
   { icon: Phone, title: "Phone", lines: ["+1 (234) 567-8900"], note: "Mon – Fri, 9AM – 6PM (PT)" },
   { icon: MapPin, title: "Headquarters", lines: ["BAE HQ, Los Angeles, CA", "United States"], note: "By appointment only." },
-  { icon: Send, title: "Press & Media Inquiries", lines: ["press@bae.band"], note: "For interviews, press kits and media requests." },
+  ...(published(PRESS_EMAIL)
+    ? [{ icon: Send, title: "Press & Media Inquiries", lines: [PRESS_EMAIL], note: "For interviews, press kits and media requests." }]
+    : []),
 ];
 
 const FAQS = [
-  { question: "How do I submit music or a demo?", answer: "Send a link to your music along with a short bio to submissions@bae.band, or use the subject line \"Submission\" on the contact form." },
+  {
+    question: "How do I submit music or a demo?",
+    answer: `Send a link to your music along with a short bio via the contact form, using the subject line "Submission".${
+      published(SUBMISSIONS_EMAIL) ? ` You can also email ${SUBMISSIONS_EMAIL}.` : ""
+    }`,
+  },
   { question: "How can I book an artist?", answer: "Reach out via the contact form with the event details, dates and budget, and our booking team will follow up." },
   { question: "How do I become a partner or sponsor?", answer: "We're always open to partnerships that align with the culture. Tell us about your brand using the form below." },
-  { question: "Do you offer internships?", answer: "Yes — internship openings are posted periodically across our labels. Send your resume to info@bae.band to be considered." },
-  { question: "What are your licensing terms?", answer: "For sync, licensing or usage requests, contact press@bae.band with details on the intended use." },
+  {
+    question: "Do you offer internships?",
+    answer: `Yes — internship openings are posted periodically across our labels. Send your resume via the contact form to be considered.${
+      published(CONTACT_EMAIL) ? ` You can also email ${CONTACT_EMAIL}.` : ""
+    }`,
+  },
+  {
+    question: "What are your licensing terms?",
+    answer: `For sync, licensing or usage requests, use the contact form with details on the intended use.${
+      published(PRESS_EMAIL) ? ` You can also email ${PRESS_EMAIL}.` : ""
+    }`,
+  },
   { question: "How long does it take to get a response?", answer: "We reply fast — expect to hear back within 24 hours on business days." },
 ];
 

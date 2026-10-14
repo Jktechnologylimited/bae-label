@@ -27,6 +27,7 @@ export default function Header({ user }: { user: SafeUser | null }) {
     setPrevPathname(pathname);
     if (mobileOpen) setMobileOpen(false);
     if (searchOpen) setSearchOpen(false);
+    if (labelsOpen) setLabelsOpen(false);
   }
 
   useEffect(() => {
@@ -85,14 +86,27 @@ export default function Header({ user }: { user: SafeUser | null }) {
               );
             })}
 
-            {/* Labels dropdown */}
-            <div className="relative" onMouseEnter={() => setLabelsOpen(true)} onMouseLeave={() => setLabelsOpen(false)}>
+            {/* Labels dropdown — opens on hover for mouse users and on click
+                (or Enter/Space) for keyboard and touch users, and closes on
+                Escape. It used to be hover-only, so it was unreachable without
+                a mouse. */}
+            <div
+              className="relative"
+              onMouseEnter={() => setLabelsOpen(true)}
+              onMouseLeave={() => setLabelsOpen(false)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") setLabelsOpen(false);
+              }}
+            >
               <button
-                className="flex items-center gap-1 py-2 text-[12px] font-semibold uppercase tracking-[0.1em] text-muted transition-colors hover:text-paper"
+                type="button"
+                onClick={() => setLabelsOpen((open) => !open)}
+                aria-haspopup="true"
                 aria-expanded={labelsOpen}
+                className="flex items-center gap-1 py-2 text-[12px] font-semibold uppercase tracking-[0.1em] text-muted transition-colors hover:text-paper"
               >
                 Labels
-                <ChevronDown className={clsx("size-3 transition-transform", labelsOpen && "rotate-180")} />
+                <ChevronDown className={clsx("size-3 transition-transform", labelsOpen && "rotate-180")} aria-hidden="true" />
               </button>
               <AnimatePresence>
                 {labelsOpen && (
@@ -140,6 +154,7 @@ export default function Header({ user }: { user: SafeUser | null }) {
                     <input
                       autoFocus
                       type="text"
+                      aria-label="Search artists and releases"
                       placeholder="Search artists, releases…"
                       className="w-[260px] bg-transparent px-3 py-2.5 text-sm text-paper placeholder:text-muted focus:outline-none"
                     />

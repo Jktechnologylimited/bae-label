@@ -9,7 +9,7 @@ export interface OrderItem {
 }
 
 export interface Order {
-  id: string; // e.g. BAE-8923
+  id: string; // opaque random id, e.g. BAE-3f9c1a77b2e04d15
   eventId: string;
   userId?: string;
   buyerName: string;
@@ -20,12 +20,15 @@ export interface Order {
   total: number;
   status: OrderStatus;
   paystackReference?: string;
+  /** Origin the buyer checked out from. Lets webhook-driven ticket emails
+   * build correct absolute links without depending on env at webhook time. */
+  baseUrl?: string;
   createdAt: string;
   paidAt?: string;
 }
 
 export interface Ticket {
-  code: string; // unique redemption code, e.g. BAE-8923-01, encoded in the QR
+  code: string; // unique redemption code, e.g. BAE-3f9c1a77b2e04d15-01, encoded in the QR
   orderId: string;
   eventId: string;
   tierName: string;

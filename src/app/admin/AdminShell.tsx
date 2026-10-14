@@ -16,6 +16,7 @@ import {
   Newspaper,
   Settings,
   BookOpen,
+  KeyRound,
   PanelLeftOpen,
   PanelLeftClose,
 } from "lucide-react";
@@ -34,6 +35,10 @@ const NAV = [
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/settings", label: "Settings", icon: Settings },
   { href: "/admin/docs", label: "Documentation", icon: BookOpen },
+  // Password changes and the recovery address live on /account, since they are
+  // per-person rather than per-site — surfaced here so they're findable from
+  // the dashboard instead of only by remembering the URL.
+  { href: "/account", label: "Password & Security", icon: KeyRound },
 ];
 
 function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {

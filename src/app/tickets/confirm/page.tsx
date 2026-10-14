@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Order Confirmation" };
 export default async function ConfirmPage({
   searchParams,
 }: {
-  searchParams: Promise<{ order?: string; reference?: string; trxref?: string; dryRun?: string }>;
+  searchParams: Promise<{ order?: string }>;
 }) {
   const params = await searchParams;
   const orderId = params.order;
@@ -23,10 +23,10 @@ export default async function ConfirmPage({
     );
   }
 
-  const result = await finalizeOrder(orderId, {
-    reference: params.reference ?? params.trxref,
-    dryRun: params.dryRun === "1",
-  });
+  // No payment decision comes from the query string: `finalizeOrder` always
+  // re-verifies against the reference stored on the order and checks the
+  // amount. (A `?dryRun=1` parameter used to skip payment entirely.)
+  const result = await finalizeOrder(orderId);
 
   if ("error" in result) {
     return <ErrorState message={result.error} />;
@@ -45,7 +45,7 @@ export default async function ConfirmPage({
         <p className="mt-3 text-sm text-muted-onlight">
           Order <span className="font-semibold text-ink">{order.id}</span> is confirmed for{" "}
           <span className="font-semibold text-ink">{event?.name ?? "your event"}</span>. We&apos;ve emailed your
-          digital tickets to <span className="font-semibold text-ink">{order.buyerEmail}</span>.
+          digital tickets to <span className="font-semibold text-ink">{maskEmail(order.buyerEmail)}</span>.
         </p>
 
         <div className="mt-10 divide-y divide-black/10 border-y border-black/10 text-left">
@@ -86,6 +86,15 @@ export default async function ConfirmPage({
       </section>
     </div>
   );
+}
+
+/** Reduce the buyer's address to something identifiable only to them — the
+ * confirmation URL is a GET that anyone holding the link can open. */
+function maskEmail(email: string): string {
+  const [local, domain] = email.split("@");
+  if (!local || !domain) return "your email address";
+  const hidden = "•".repeat(Math.min(Math.max(local.length - 1, 3), 8));
+  return `${local.slice(0, 1)}${hidden}@${domain}`;
 }
 
 function ErrorState({ message }: { message: string }) {

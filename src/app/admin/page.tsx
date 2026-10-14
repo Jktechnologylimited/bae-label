@@ -4,17 +4,11 @@ import { CalendarDays, Receipt, Ticket as TicketIcon, TrendingUp, ArrowRight } f
 import { listEvents } from "@/lib/db/events";
 import { listOrders, listTickets } from "@/lib/ticketing/store";
 import { formatNaira } from "@/lib/data";
-import { isFirstAdminStillDefault } from "@/lib/db/seed";
 
 export const metadata: Metadata = { title: "Admin — Overview" };
 
 export default async function AdminOverviewPage() {
-  const [events, orders, tickets, defaultAdminStillActive] = await Promise.all([
-    listEvents(),
-    listOrders(),
-    listTickets(),
-    isFirstAdminStillDefault(),
-  ]);
+  const [events, orders, tickets] = await Promise.all([listEvents(), listOrders(), listTickets()]);
 
   const paidOrders = orders.filter((o) => o.status === "paid");
   const revenue = paidOrders.reduce((sum, o) => sum + o.total, 0);
@@ -32,16 +26,6 @@ export default async function AdminOverviewPage() {
     <div>
       <h1 className="font-display text-2xl font-black uppercase tracking-tight">Overview</h1>
       <p className="mt-1 text-sm text-muted">Welcome back — here&apos;s what&apos;s happening across BAE.</p>
-
-      {defaultAdminStillActive && (
-        <div className="mt-6 border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-paper">
-          You&apos;re still using the seeded default admin password. Head to{" "}
-          <Link href="/account" className="font-semibold underline underline-offset-2">
-            your account
-          </Link>{" "}
-          and change it before this goes live.
-        </div>
-      )}
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((s) => (

@@ -1,41 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
-import { promises as fs } from "fs";
 import path from "path";
-import { uploadsDir } from "@/app/api/admin/upload/route";
-
-const CONTENT_TYPES: Record<string, string> = {
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  png: "image/png",
-  webp: "image/webp",
-  gif: "image/gif",
-};
+import { getImage } from "@/lib/db/images";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ filename: string }> }) {
   const { filename: rawFilename } = await params;
 
-  // Strip any path components — this is user-controlled input in the URL,
-  // so guard against path traversal (e.g. "../../.env") before touching disk.
-  const filename = path.basename(rawFilename);
-  const ext = filename.split(".").pop()?.toLowerCase() ?? "";
-  const contentType = CONTENT_TYPES[ext];
-  if (!contentType) {
+  // This is user-controlled input in the URL. It's just a lookup key into
+  // Postgres (not a filesystem path), but strip any path-like components
+  // anyway so a request like "/uploads/../../whatever" can't be mistaken
+  // for anything other than a plain, harmless lookup that 404s.
+  const id = path.basename(rawFilename);
+
+  const image = await getImage(id);
+  if (!image) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
 
-  const filePath = path.join(uploadsDir(), filename);
-
-  try {
-    const buffer = await fs.readFile(filePath);
-    return new NextResponse(buffer, {
-      headers: {
-        "Content-Type": contentType,
-        // Filenames are random UUIDs and never reused, so a given URL's
-        // content never changes — safe to cache aggressively.
-        "Cache-Control": "public, max-age=31536000, immutable",
-      },
-    });
-  } catch {
-    return NextResponse.json({ error: "Not found." }, { status: 404 });
-  }
+  return new NextResponse(new Uint8Array(image.data), {
+    headers: {
+      "Content-Type": image.contentType,
+      // Never let a browser second-guess the content type, and never render an
+      // upload as a document — belt and braces on top of the upload route's
+      // magic-byte check.
+      "X-Content-Type-Options": "nosniff",
+      "Content-Disposition": "inline",
+      // Each upload gets a brand-new random id that's never reused, so a
+      // given URL's content never changes — safe to cache aggressively.
+      "Cache-Control": "public, max-age=31536000, immutable",
+    },
+  });
 }

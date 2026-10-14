@@ -3,6 +3,7 @@ import BaeMark from "@/components/brand/BaeMark";
 import SocialIcon from "@/components/brand/SocialIcon";
 import NewsletterForm from "./NewsletterForm";
 import WorldDots from "./WorldDots";
+import { CONTACT_EMAIL, published } from "@/lib/contact";
 import { FOOTER_COLUMNS, SOCIAL_LINKS } from "@/lib/nav";
 
 export default function Footer() {
@@ -72,7 +73,7 @@ export default function Footer() {
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Contact</p>
             <ul className="mt-4 space-y-2.5 text-sm text-paper/85">
-              <li>info@bae.band</li>
+              {published(CONTACT_EMAIL) && <li>{CONTACT_EMAIL}</li>}
               <li>+1 (234) 567-8900</li>
               <li>Los Angeles, CA</li>
             </ul>

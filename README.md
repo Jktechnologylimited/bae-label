@@ -16,9 +16,10 @@ running the site.
 - **TypeScript**
 - **Tailwind CSS v4** — design tokens (colors, fonts) live in `src/app/globals.css` under `@theme`
 - **Framer Motion** — scroll-reveal and micro-interactions
-- **Postgres** (built and tested against [Neon](https://neon.tech)) — every real content type, order, ticket and
-  account lives here — see "Database" below
-- **Vercel Blob** — admin-uploaded images (falls back to local disk when not configured) — see "Image uploads" below
+- **Postgres** (built and tested against [Neon](https://neon.tech)) — every real content type, order, ticket,
+  account, and admin-uploaded image lives here by default — see "Database" and "Image uploads" below
+- **Vercel Blob** *(optional)* — a CDN upgrade for admin-uploaded images once you outgrow Neon's free storage;
+  not required to go live — see "Image uploads" below
 - **Resend** — email delivery for the newsletter, contact form, and digital ticket delivery
 - **Paystack** — ticket checkout (REST API, no SDK) — see "Ticketing backend" below
 - **Google OAuth 2.0** — "Continue with Google" (hand-rolled, no SDK) — see "Connecting Google Sign-In" below
@@ -39,16 +40,42 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Visit `http://localhost:3000`. On first run, the app automatically creates its tables if they don't exist yet, seeds
-the starting catalog content, and creates a default admin account, all logged to your terminal:
+Visit `http://localhost:3000`. On first run, the app creates its tables if they don't exist yet and seeds the
+starting catalog content. It also creates an admin account, but **only** from credentials you supply:
 
 ```
-[seed] Created default admin account — email: admin@bae.band  password: BaeAdmin!2026
-[seed] Log in at /login and change this password immediately (see /account).
+ADMIN_EMAIL=you@example.com
+ADMIN_PASSWORD=<a long, unique password>
 ```
 
-Log in at `/login` with those credentials to reach `/admin`. **Change that password immediately** before this ever
-goes near production — see `/account` once logged in.
+Both are required in **every** environment. There is no default admin account: if they are unset, none is created, the
+reason is logged, and you set them and restart. (Earlier versions shipped `admin@bae.band` / `BaeAdmin!2026` — that
+hardcoded pair is gone from the code. If an account with that email still exists in your database, change its password
+or delete it: the app will not do it for you.)
+
+Log in at `/login` with your credentials to reach `/admin`.
+
+### Passwords, recovery and getting locked out
+
+Password settings live on **`/account`** (also linked as "Password & Security" in the admin sidebar), because they are
+per-person rather than per-site:
+
+- **Change password** — requires your current password, and signs out every *other* session you have open.
+- **Recovery email** — an optional second address. When it's set, `/forgot-password` sends the reset link there
+  instead of to your sign-in address, and you can enter *either* address on that page. Set this if your sign-in
+  address can't receive mail.
+
+Both require your current password to change, so a stolen session can't quietly redirect resets to someone else's
+inbox or lock you out.
+
+**If you're locked out and email isn't working**, reset the password straight in the database:
+
+```bash
+node --env-file=.env.local scripts/reset-password.mjs you@example.com
+```
+
+It prints a new random password once and invalidates that account's existing sessions. This needs only
+`DATABASE_URL` — no email, no `RESEND_API_KEY` — so it works even when mail delivery is broken.
 
 ```bash
 npm run build   # production build
@@ -230,7 +257,7 @@ is required to run the app at all, locally or in production.
 
 1. Create a [Neon](https://neon.tech) project (the free tier is enough for an MVP/single-event launch).
 2. In the Neon dashboard, copy the **pooled** connection string — the one with `-pooler` in the hostname, e.g.
-   `postgresql://user:password@ep-xxx-pooler.region.aws.neon.tech/dbname?sslmode=require`. Use the pooled one, not
+   `postgresql://user:password@ep-xxx-pooler.region.aws.neon.tech/dbname?sslmode=verify-full`. Use the pooled one, not
    the direct one: Vercel runs each request in its own short-lived serverless function, and without connection
    pooling that would quickly exhaust Neon's direct connection limit under any real traffic.
 3. Add it to `.env.local` (local dev) and to your Vercel project's environment variables (production) as
@@ -261,7 +288,7 @@ Using the same Neon database for local dev is the path of least setup, but if yo
 either create a second, free Neon project for development, or use Neon's **branching** feature to fork your
 production database into an isolated dev branch with its own connection string. A local Postgres (e.g. via Docker:
 `docker run -e POSTGRES_PASSWORD=dev -p 5432:5432 postgres:16`) also works — `DATABASE_URL` just needs to point at
-any reachable Postgres server; only a managed host like Neon additionally needs `sslmode=require` in the connection
+any reachable Postgres server; only a managed host like Neon additionally needs `sslmode=verify-full` in the connection
 string, which is how `src/lib/db/pg.ts` decides whether to use TLS.
 
 ## Image uploads
@@ -270,36 +297,30 @@ Every admin content form (Artists, Releases, Events, News) has an image field �
 up to 5MB. The uploaded photo replaces the gradient `Placeholder` art everywhere that content is shown publicly
 (cards, detail pages) immediately, no extra step.
 
-**How it's wired, and a real bug this surfaced:** uploads are saved to `.data/uploads/` (not `public/uploads/`) and
-served back at `/uploads/<file>` through a dynamic route handler (`src/app/uploads/[filename]/route.ts`) that reads
-the file from disk on each request, rather than through Next's static `public/` file serving. This wasn't the
-original design — the first version wrote straight to `public/uploads/`, and testing it against a production build
-(`next build && next start`) surfaced a real problem: Next's production server builds its list of servable
-`public/` files at boot and does **not** pick up files written there while the process is running, so a freshly
-uploaded image 404'd until the server was restarted. Routing through a normal dynamic route instead sidesteps that
-entirely, since it's just a per-request disk read rather than a static-asset lookup. Confirmed with a live test:
-upload → fetch immediately, same running server, no restart → 200. The route also strips path components from the
-filename before touching disk, so a request like `/uploads/../../.env` 404s instead of leaking files.
+**Default storage: Postgres, not a file on disk.** `/api/admin/upload` saves the image bytes as a row in the
+`uploaded_images` table (see `src/lib/db/images.ts`) and serves them back at `/uploads/<id>` through a dynamic
+route handler (`src/app/uploads/[filename]/route.ts`) that reads the row per request. This is deliberate, not a
+shortcut: an earlier version wrote files to local disk, which doesn't survive on a serverless host with an
+ephemeral/read-only filesystem like Vercel (confirmed by testing — every upload crashed there with a 500 error).
+Storing the bytes in the same Postgres database the rest of the content already lives in needs **zero extra
+services, signups, or environment variables** beyond the `DATABASE_URL` the app already requires — the right
+default for a free Vercel + free Neon setup, which is what most people launching a first event are on. The route
+strips path-like components from the requested id before querying, so a request like `/uploads/../../.env` 404s
+rather than doing anything unexpected.
 
-**Deploying to Vercel — this is now handled automatically.** `/api/admin/upload` checks for a
-`BLOB_READ_WRITE_TOKEN` environment variable. If it's set, uploads go straight to
-[Vercel Blob](https://vercel.com/docs/storage/vercel-blob) (real, persistent object storage) and the response is
-the blob's own public CDN URL. If it's not set, the route falls back to the local-filesystem behavior described
-above, which is fine for local dev but **will not persist** on a serverless host with an ephemeral/read-only
-filesystem — every upload will fail there with a 500 error.
+One real tradeoff worth knowing: Neon's free tier has a storage cap (check your current limit on
+[neon.tech/pricing](https://neon.tech/pricing) — these change over time), and every upload counts against it
+alongside your actual content rows. For a single-event MVP with a modest number of artist photos, release covers
+and event images, this is very unlikely to matter; if you're running many events with heavy media, keep an eye on
+usage or move to the Blob option below.
 
-To turn this on:
-
-1. In the Vercel dashboard, open the project → **Storage** → **Create Database** → **Blob**.
-2. Connect it to this project. Vercel automatically adds `BLOB_READ_WRITE_TOKEN` to the project's environment
-   variables — no manual copy-pasting needed.
-3. Redeploy. Uploads will now go to Blob storage automatically; nothing in the code needs to change, and
-   `ImageUpload.tsx` and every form using it are unaffected since the response shape (`{ url }`) is identical
-   either way.
-
-This only fixes image storage. The rest of the site's content (events, artists, releases, news, users, orders,
-tickets, settings) now lives in Postgres — see [Database](#database) above — so it's already persistent and
-doesn't need Blob or any other extra setup.
+**Optional upgrade: Vercel Blob.** If you later want images on a real CDN instead of served through a function —
+or you outgrow Neon's free storage — connect a Blob store (Vercel dashboard → project → **Storage** → **Create
+Database** → **Blob** → **Connect to Project**; note this is a paid add-on on Vercel beyond a small free trial,
+which is why it's optional here, not the default). Vercel adds `BLOB_READ_WRITE_TOKEN` to the project automatically
+once connected — `/api/admin/upload` checks for it and switches to Blob immediately, with no other code changes,
+since the response shape (`{ url }`) is identical either way and `ImageUpload.tsx` doesn't know or care which mode
+is active.
 
 ## Streaming links
 
@@ -355,13 +376,12 @@ didn't originally scope but were requested afterward.
    is the reliable, production-grade confirmation path — the redirect to `/tickets/confirm` is a good UX but isn't
    guaranteed to fire (the buyer might close the tab), so the webhook is what should be trusted to actually issue
    tickets in production.
-4. Without `PAYSTACK_SECRET_KEY` set, checkout runs in **dry run mode**: it skips Paystack entirely and redirects
-   straight to the confirmation page, which finalizes the order as if payment succeeded. This is what let me test
-   the entire purchase → ticket → verification loop end-to-end without a real payment account — I ran it twice
-   during development (two different events, different ticket tiers, different buyers) and confirmed: order pricing
-   computed correctly server-side, tickets issued with working QR codes, first scan at `/verify` approved entry,
-   second scan of the same ticket was correctly rejected as already-used, and a bogus code was correctly rejected
-   as invalid.
+4. Without `PAYSTACK_SECRET_KEY` set, checkout runs in **dry run mode** during local development only
+   (`NODE_ENV !== "production"`): it skips Paystack entirely and goes straight to the confirmation page, which
+   finalizes the order as if payment succeeded. That is what makes the entire purchase → ticket → verification loop
+   testable without a real payment account. In production a missing key is a hard error: checkout and the webhook
+   both refuse to process anything rather than treating a payment as successful. The amount and currency reported by
+   Paystack are always compared against the order before tickets are issued.
 5. **Important:** the live Paystack API calls (`initialize`/`verify` in `src/lib/ticketing/paystack.ts`) are written
    to Paystack's documented spec but were **not** exercised against the real API while building this — this sandbox
    can't reach `paystack.co`. Test with a real test-mode secret key before trusting it with real money.
@@ -374,12 +394,15 @@ covers.
 
 ### Door verification (`/verify`)
 
-This page is gated to admin accounts only (enforced by both `middleware.ts` and the route handler itself) — a
-non-admin or logged-out visitor is redirected to `/login`. A ticket's QR code encodes a URL (`/verify?code=...`),
-so any phone's native camera app can scan it and open the page with the code pre-filled; there's also a manual
-entry field for typing a code in directly. Scanning calls `POST /api/verify`, which looks the ticket up, rejects
-unknown codes, rejects tickets already marked used (showing when/who scanned it) or voided, and otherwise marks it
-used and approves entry. Note that everyone scanning tickets currently needs a full admin account (which also
+This page is gated to admin accounts only — `middleware.ts` redirects logged-out visitors away from the page, and
+`POST /api/verify` independently requires an admin session of its own (the middleware matcher covers page routes,
+not the `/api` tree, so the route handler is what actually protects it). A ticket's QR code encodes a URL
+(`/verify?code=...`), so any phone's native camera app can scan it and open the page with the code pre-filled;
+there's also a manual entry field for typing a code in directly. Scanning calls `POST /api/verify`, which looks the
+ticket up, rejects unknown codes, rejects tickets already marked used (showing when/who scanned it) or voided, and
+otherwise marks it used and approves entry. Redemption is a single conditional database write, so two simultaneous
+scans of the same ticket cannot both be approved. Who scanned is taken from the signed-in admin's session, not from
+anything typed into the form. Note that everyone scanning tickets currently needs a full admin account (which also
 grants access to `/admin`) — there's no lighter-weight "door staff" role. If you want bouncers to be able to scan
 without also being able to edit events/pricing, that'd be a good next role to add (see `Role` in
 `src/lib/db/schema.ts`).

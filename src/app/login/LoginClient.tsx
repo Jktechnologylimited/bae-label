@@ -7,11 +7,13 @@ import { Loader2, LogIn } from "lucide-react";
 import BaeMark from "@/components/brand/BaeMark";
 import GoogleButton from "@/components/auth/GoogleButton";
 import { oauthErrorMessage } from "@/lib/auth/oauthErrors";
+import { safeNextPath } from "@/lib/navigation";
 
 export default function LoginClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/account";
+  // Validated: only a same-origin path is ever used as a post-login redirect.
+  const next = safeNextPath(searchParams.get("next"));
   const oauthError = oauthErrorMessage(searchParams.get("error"));
 
   const [email, setEmail] = useState("");

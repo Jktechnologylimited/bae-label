@@ -6,6 +6,8 @@ import BaeMark from "@/components/brand/BaeMark";
 import { getTicket } from "@/lib/ticketing/store";
 import { generateTicketQr } from "@/lib/ticketing/qr";
 import { getEvent } from "@/lib/db/events";
+import { siteBaseUrl } from "@/lib/site";
+import { CONTACT_EMAIL, published } from "@/lib/contact";
 import clsx from "clsx";
 import { LABEL_CLASSES, LABEL_SHORT } from "@/lib/labelStyle";
 
@@ -17,7 +19,7 @@ export default async function TicketPage({ params }: { params: Promise<{ code: s
   if (!ticket) notFound();
 
   const event = await getEvent(ticket.eventId);
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const baseUrl = await siteBaseUrl();
   const qrDataUrl = await generateTicketQr(ticket.code, baseUrl);
   const cls = event ? LABEL_CLASSES[event.labels[0]] : undefined;
 
@@ -38,6 +40,10 @@ export default async function TicketPage({ params }: { params: Promise<{ code: s
             {ticket.status === "used" ? (
               <span className="flex items-center gap-1.5 bg-muted/20 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted">
                 <XCircle className="size-3.5" /> Used
+              </span>
+            ) : ticket.status === "void" ? (
+              <span className="flex items-center gap-1.5 bg-bigdrip/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-bigdrip">
+                <XCircle className="size-3.5" /> Void
               </span>
             ) : (
               <span className="flex items-center gap-1.5 bg-elmayana/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-elmayana">
@@ -89,12 +95,14 @@ export default async function TicketPage({ params }: { params: Promise<{ code: s
           </div>
         </div>
 
-        <p className="mt-6 text-center text-xs text-muted">
-          Having trouble? Contact{" "}
-          <a href="mailto:info@bae.band" className="underline underline-offset-2">
-            info@bae.band
-          </a>
-        </p>
+        {published(CONTACT_EMAIL) && (
+          <p className="mt-6 text-center text-xs text-muted">
+            Having trouble? Contact{" "}
+            <a href={`mailto:${CONTACT_EMAIL}`} className="underline underline-offset-2">
+              {CONTACT_EMAIL}
+            </a>
+          </p>
+        )}
       </div>
     </div>
   );

@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { enforceRateLimit } from "@/lib/rateLimit";
 
 // This route is wired for Resend but needs a live backend/database to fully
 // function — see the README for what's left to connect.
 export async function POST(req: NextRequest) {
+  const limited = enforceRateLimit(req, "newsletter", 5, 60 * 60 * 1000);
+  if (limited) return limited;
+
   try {
     const { email } = await req.json();
 
-    if (!email || typeof email !== "string" || !/^\S+@\S+\.\S+$/.test(email)) {
+    if (!email || typeof email !== "string" || email.length > 254 || !/^\S+@\S+\.\S+$/.test(email)) {
       return NextResponse.json({ error: "A valid email is required." }, { status: 400 });
     }
 

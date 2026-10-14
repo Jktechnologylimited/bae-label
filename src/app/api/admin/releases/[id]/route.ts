@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { updateRelease, deleteRelease } from "@/lib/db/releases";
-import { Release } from "@/lib/types";
+import { pickReleasePatch } from "@/lib/adminPayload";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
@@ -10,8 +10,18 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   const { id } = await params;
-  const body = (await req.json()) as Partial<Omit<Release, "id">>;
-  const release = await updateRelease(id, body);
+
+  let raw: unknown;
+  try {
+    raw = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+  }
+
+  const picked = pickReleasePatch(raw);
+  if (!picked.ok) return NextResponse.json({ error: picked.error }, { status: 400 });
+
+  const release = await updateRelease(id, picked.patch);
   if (!release) return NextResponse.json({ error: "Release not found." }, { status: 404 });
 
   return NextResponse.json({ release });

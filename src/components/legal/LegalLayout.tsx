@@ -1,6 +1,8 @@
 import { LucideIcon, Mail, Phone } from "lucide-react";
+import Link from "next/link";
 import LegalHero from "./LegalHero";
 import Breadcrumb from "@/components/ui/Breadcrumb";
+import { published } from "@/lib/contact";
 
 export interface LegalSection {
   id: string;
@@ -15,8 +17,8 @@ export default function LegalLayout({
   description,
   lastUpdated,
   sections,
-  contactEmail = "privacy@bae.band",
-  contactPhone = "+1 (234) 567-8900",
+  contactEmail = "",
+  contactPhone = "",
 }: {
   crumb: string;
   icon: LucideIcon;
@@ -27,6 +29,9 @@ export default function LegalLayout({
   contactEmail?: string;
   contactPhone?: string;
 }) {
+  // Contact details are only shown when configured — a policy page that prints
+  // an address nobody monitors is worse than one that points at the form.
+  const hasContact = published(contactEmail) || published(contactPhone);
   return (
     <div className="bg-paper text-ink">
       <section className="border-b border-black/10">
@@ -63,12 +68,24 @@ export default function LegalLayout({
               <p className="mt-1 text-xs text-muted-onlight">
                 If you have any questions, please contact us.
               </p>
-              <p className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-ink">
-                <Mail className="size-3.5" /> {contactEmail}
-              </p>
-              <p className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-ink">
-                <Phone className="size-3.5" /> {contactPhone}
-              </p>
+              {published(contactEmail) && (
+                <p className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-ink">
+                  <Mail className="size-3.5" /> {contactEmail}
+                </p>
+              )}
+              {published(contactPhone) && (
+                <p className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-ink">
+                  <Phone className="size-3.5" /> {contactPhone}
+                </p>
+              )}
+              {!hasContact && (
+                <Link
+                  href="/contact"
+                  className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-ink underline underline-offset-2"
+                >
+                  Use our contact form
+                </Link>
+              )}
             </div>
           </aside>
 

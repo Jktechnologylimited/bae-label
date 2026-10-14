@@ -11,12 +11,6 @@ export interface PasswordResetToken {
 
 const TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
 
-interface Row {
-  user_id: string;
-  expires_at: string;
-  used: boolean;
-}
-
 export async function createResetToken(userId: string): Promise<string> {
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + TOKEN_TTL_MS).toISOString();
@@ -30,14 +24,17 @@ export async function createResetToken(userId: string): Promise<string> {
 }
 
 export async function consumeResetToken(token: string): Promise<{ userId: string } | null> {
-  const rows = await query<Row>(`SELECT user_id, expires_at, used FROM password_reset_tokens WHERE token = $1`, [
-    token,
-  ]);
-  const entry = rows[0];
-  if (!entry) return null;
-  if (entry.used) return null;
-  if (new Date(entry.expires_at).getTime() < Date.now()) return null;
-
-  await query(`UPDATE password_reset_tokens SET used = true WHERE token = $1`, [token]);
-  return { userId: entry.user_id };
+  // One conditional statement, so two concurrent requests presenting the same
+  // token cannot both succeed. This used to be SELECT → check → UPDATE across
+  // two separate pooled connections, which both callers could pass (M1).
+  const rows = await query<{ user_id: string }>(
+    `UPDATE password_reset_tokens
+        SET used = true
+      WHERE token = $1
+        AND used = false
+        AND expires_at::timestamptz > now()
+      RETURNING user_id`,
+    [token]
+  );
+  return rows[0] ? { userId: rows[0].user_id } : null;
 }

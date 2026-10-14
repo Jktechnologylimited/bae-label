@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ShieldCheck } from "lucide-react";
 import LegalLayout, { LegalSection } from "@/components/legal/LegalLayout";
+import { PRIVACY_EMAIL, emailOrForm } from "@/lib/contact";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -129,7 +130,7 @@ const sections: LegalSection[] = [
   {
     id: "contact",
     title: "Contact Us",
-    body: <p>If you have any questions or concerns about this Privacy Policy or our data practices, please contact us at privacy@bae.band or +1 (234) 567-8900.</p>,
+    body: <p>If you have any questions or concerns about this Privacy Policy or our data practices, please {emailOrForm(PRIVACY_EMAIL)}.</p>,
   },
 ];
 
@@ -142,6 +143,7 @@ export default function PrivacyPage() {
       description="Your privacy is important to us. This Privacy Policy explains how BAE collects, uses, shares and protects your information."
       lastUpdated="August 16, 2026"
       sections={sections}
+      contactEmail={PRIVACY_EMAIL}
     />
   );
 }

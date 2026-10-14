@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createUser, getUserByEmail } from "@/lib/db/users";
 import { setSessionCookie } from "@/lib/auth/session";
 import { toSafeUser } from "@/lib/db/schema";
+import { enforceRateLimit } from "@/lib/rateLimit";
 
 export async function POST(req: NextRequest) {
+  const limited = enforceRateLimit(req, "signup", 5, 60 * 60 * 1000);
+  if (limited) return limited;
+
   try {
     const { name, email, password } = await req.json();
 
@@ -23,7 +27,7 @@ export async function POST(req: NextRequest) {
     }
 
     const user = await createUser({ name, email, password, role: "customer" });
-    await setSessionCookie(user.id, user.role);
+    await setSessionCookie(user.id, user.role, user.sessionVersion);
 
     return NextResponse.json({ user: toSafeUser(user) });
   } catch (err) {

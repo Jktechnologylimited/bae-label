@@ -203,6 +203,7 @@ export default function TicketsClient({ events, testMode }: { events: BaeEvent[]
                     <input
                       value={buyerName}
                       onChange={(e) => setBuyerName(e.target.value)}
+                      aria-label="Full name"
                       placeholder="Full name"
                       className="w-full border border-black/15 bg-white px-4 py-3 text-sm focus:outline-none focus:border-ink"
                     />
@@ -210,6 +211,7 @@ export default function TicketsClient({ events, testMode }: { events: BaeEvent[]
                       type="email"
                       value={buyerEmail}
                       onChange={(e) => setBuyerEmail(e.target.value)}
+                      aria-label="Email address — tickets are sent here"
                       placeholder="Email address — tickets are sent here"
                       className="w-full border border-black/15 bg-white px-4 py-3 text-sm focus:outline-none focus:border-ink"
                     />

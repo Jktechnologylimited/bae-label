@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { createArtist } from "@/lib/db/artists";
-import { Artist } from "@/lib/types";
+import { missingFields, pickArtistPatch } from "@/lib/adminPayload";
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
@@ -9,11 +9,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Admin access required." }, { status: 403 });
   }
 
-  const body = (await req.json()) as Omit<Artist, "id">;
-  if (!body.name || !body.genre || !body.label) {
-    return NextResponse.json({ error: "Name, genre and label are required." }, { status: 400 });
+  let raw: unknown;
+  try {
+    raw = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const artist = await createArtist(body);
-  return NextResponse.json({ artist });
+  const picked = pickArtistPatch(raw);
+  if (!picked.ok) return NextResponse.json({ error: picked.error }, { status: 400 });
+
+  const missing = missingFields(picked.patch, ["name", "genre", "label"]);
+  if (missing) return NextResponse.json({ error: `${missing} is required.` }, { status: 400 });
+
+  const artist = await createArtist(picked.patch as Parameters<typeof createArtist>[0]);
+  return NextResponse.json({ artist }, { status: 201 });
 }

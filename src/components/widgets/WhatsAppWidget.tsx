@@ -167,6 +167,7 @@ export default function WhatsAppWidget({ settings }: { settings: SiteSettings })
                       }
                     }}
                     rows={1}
+                    aria-label="Message"
                     placeholder="Type a message…"
                     className="max-h-24 flex-1 resize-none border border-line bg-transparent px-3 py-2.5 text-sm text-paper placeholder:text-muted focus:outline-none focus:border-gold"
                   />

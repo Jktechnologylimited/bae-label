@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cookie } from "lucide-react";
 import LegalLayout, { LegalSection } from "@/components/legal/LegalLayout";
+import { PRIVACY_EMAIL, emailOrForm } from "@/lib/contact";
 
 export const metadata: Metadata = {
   title: "Cookie Policy",
@@ -76,7 +77,7 @@ const sections: LegalSection[] = [
   {
     id: "contact",
     title: "Contact Us",
-    body: <p>If you have any questions about our use of cookies, please contact us at privacy@bae.band or +1 (234) 567-8900.</p>,
+    body: <p>If you have any questions about our use of cookies, please {emailOrForm(PRIVACY_EMAIL)}.</p>,
   },
 ];
 
@@ -89,6 +90,7 @@ export default function CookiesPage() {
       description="This Cookie Policy explains how BAE uses cookies and similar technologies when you visit our website."
       lastUpdated="August 16, 2026"
       sections={sections}
+      contactEmail={PRIVACY_EMAIL}
     />
   );
 }

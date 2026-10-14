@@ -47,6 +47,7 @@ export default function EventsClient({ events }: { events: BaeEvent[] }) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search events, artists, venues…"
+              aria-label="Search events, artists and venues"
               className="w-full border border-black/15 bg-white py-3 pl-11 pr-4 text-sm focus:outline-none focus:border-ink"
             />
           </div>

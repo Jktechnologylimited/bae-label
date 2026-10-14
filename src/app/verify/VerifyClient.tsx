@@ -23,7 +23,6 @@ const RESULT_STYLES: Record<VerifyResponse["result"], { bg: string; icon: typeof
 export default function VerifyClient() {
   const searchParams = useSearchParams();
   const [code, setCode] = useState(searchParams.get("code") ?? "");
-  const [staff, setStaff] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<VerifyResponse | null>(null);
 
@@ -36,7 +35,9 @@ export default function VerifyClient() {
       const res = await fetch("/api/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: code.trim(), staff: staff || undefined }),
+        // Who scanned is taken from the signed-in admin's session, not from
+        // anything the client can type.
+        body: JSON.stringify({ code: code.trim() }),
       });
       const json = await res.json();
       if (!res.ok && !json.result) {
@@ -74,17 +75,8 @@ export default function VerifyClient() {
               autoFocus
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              placeholder="BAE-8923-01"
+              placeholder="BAE-3F9C1A77B2E04D15-01"
               className="mt-1.5 w-full border border-line bg-transparent px-4 py-3 font-mono text-lg tracking-wide text-paper placeholder:text-muted focus:outline-none focus:border-gold"
-            />
-          </label>
-          <label className="mt-4 block">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">Staff Name (optional)</span>
-            <input
-              value={staff}
-              onChange={(e) => setStaff(e.target.value)}
-              placeholder="Your name"
-              className="mt-1.5 w-full border border-line bg-transparent px-4 py-3 text-sm text-paper placeholder:text-muted focus:outline-none focus:border-gold"
             />
           </label>
           <button

@@ -21,19 +21,121 @@ export const DEFAULT_SETTINGS: SiteSettings = {
 
 const SETTINGS_ID = "singleton";
 
+const MAX_GREETING = 300;
+const MAX_REPLY = 120;
+const MAX_REPLIES = 8;
+
 interface Row {
-  data: Partial<SiteSettings>;
+  data: unknown;
+}
+
+/**
+ * Coerces whatever is stored (which is untyped JSON) into a well-formed
+ * `SiteSettings`, falling back to the default for any field that is missing or
+ * the wrong shape.
+ *
+ * This matters because the root layout renders the WhatsApp widget on every
+ * page: a single malformed value — `whatsappQuickReplies` stored as a string,
+ * say — used to make `settings.whatsappQuickReplies.map(...)` throw and take
+ * down every route on the site, not just the admin page that wrote it.
+ */
+export function normalizeSettings(stored: unknown): SiteSettings {
+  if (typeof stored !== "object" || stored === null || Array.isArray(stored)) return DEFAULT_SETTINGS;
+  const raw = stored as Record<string, unknown>;
+
+  return {
+    whatsappEnabled: typeof raw.whatsappEnabled === "boolean" ? raw.whatsappEnabled : DEFAULT_SETTINGS.whatsappEnabled,
+    whatsappNumber:
+      typeof raw.whatsappNumber === "string" && /^\d{8,15}$/.test(raw.whatsappNumber)
+        ? raw.whatsappNumber
+        : DEFAULT_SETTINGS.whatsappNumber,
+    whatsappGreeting:
+      typeof raw.whatsappGreeting === "string" && raw.whatsappGreeting.trim() !== ""
+        ? raw.whatsappGreeting.slice(0, MAX_GREETING)
+        : DEFAULT_SETTINGS.whatsappGreeting,
+    whatsappQuickReplies:
+      Array.isArray(raw.whatsappQuickReplies) && raw.whatsappQuickReplies.every((r) => typeof r === "string")
+        ? (raw.whatsappQuickReplies as string[]).slice(0, MAX_REPLIES).map((r) => r.slice(0, MAX_REPLY))
+        : DEFAULT_SETTINGS.whatsappQuickReplies,
+  };
+}
+
+/**
+ * Validates an admin settings PATCH. Only known fields are accepted, each with
+ * the right type, and unknown keys are rejected rather than stored.
+ */
+export function pickSettingsPatch(raw: unknown): { ok: true; patch: Partial<SiteSettings> } | { ok: false; error: string } {
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+    return { ok: false, error: "Expected a JSON object." };
+  }
+  const input = raw as Record<string, unknown>;
+  const known = ["whatsappEnabled", "whatsappNumber", "whatsappGreeting", "whatsappQuickReplies"];
+  for (const key of Object.keys(input)) {
+    if (!known.includes(key)) return { ok: false, error: `Unknown setting: ${key}.` };
+  }
+
+  const patch: Partial<SiteSettings> = {};
+
+  if ("whatsappEnabled" in input) {
+    if (typeof input.whatsappEnabled !== "boolean") {
+      return { ok: false, error: "whatsappEnabled must be true or false." };
+    }
+    patch.whatsappEnabled = input.whatsappEnabled;
+  }
+
+  if ("whatsappNumber" in input) {
+    if (typeof input.whatsappNumber !== "string") return { ok: false, error: "whatsappNumber must be text." };
+    const digits = input.whatsappNumber.replace(/[^\d]/g, "");
+    if (!/^\d{8,15}$/.test(digits)) {
+      return {
+        ok: false,
+        error: "whatsappNumber must be 8–15 digits including the country code, e.g. 2348012345678.",
+      };
+    }
+    patch.whatsappNumber = digits;
+  }
+
+  if ("whatsappGreeting" in input) {
+    if (typeof input.whatsappGreeting !== "string") return { ok: false, error: "whatsappGreeting must be text." };
+    const greeting = input.whatsappGreeting.trim();
+    if (greeting === "") return { ok: false, error: "whatsappGreeting cannot be empty." };
+    if (greeting.length > MAX_GREETING) {
+      return { ok: false, error: `whatsappGreeting must be ${MAX_GREETING} characters or fewer.` };
+    }
+    patch.whatsappGreeting = greeting;
+  }
+
+  if ("whatsappQuickReplies" in input) {
+    const value = input.whatsappQuickReplies;
+    if (!Array.isArray(value)) return { ok: false, error: "whatsappQuickReplies must be a list of phrases." };
+    if (value.length > MAX_REPLIES) {
+      return { ok: false, error: `whatsappQuickReplies can hold at most ${MAX_REPLIES} phrases.` };
+    }
+    const replies: string[] = [];
+    for (const item of value) {
+      if (typeof item !== "string") return { ok: false, error: "whatsappQuickReplies must contain only text." };
+      const trimmed = item.trim();
+      if (trimmed === "") continue;
+      if (trimmed.length > MAX_REPLY) {
+        return { ok: false, error: `Each quick reply must be ${MAX_REPLY} characters or fewer.` };
+      }
+      replies.push(trimmed);
+    }
+    patch.whatsappQuickReplies = replies;
+  }
+
+  return { ok: true, patch };
 }
 
 export async function getSettings(): Promise<SiteSettings> {
   const rows = await query<Row>(`SELECT data FROM site_settings WHERE id = $1`, [SETTINGS_ID]);
   if (rows.length === 0) return DEFAULT_SETTINGS;
-  return { ...DEFAULT_SETTINGS, ...rows[0].data };
+  return normalizeSettings(rows[0].data);
 }
 
 export async function updateSettings(patch: Partial<SiteSettings>): Promise<SiteSettings> {
   const current = await getSettings();
-  const next = { ...current, ...patch };
+  const next = normalizeSettings({ ...current, ...patch });
   await query(
     `INSERT INTO site_settings (id, data) VALUES ($1, $2)
      ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data`,

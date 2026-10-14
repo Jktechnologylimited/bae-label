@@ -12,10 +12,21 @@ const MAX_AGE_SECONDS = 60 * 60 * 24 * 14; // 14 days
 function getSecret(): string {
   const secret = process.env.SESSION_SECRET;
   if (!secret) {
+    // Fail closed in production: a known, published default secret would let
+    // anyone mint a valid session cookie for any user id.
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "SESSION_SECRET is not set. Refusing to sign or verify session cookies in production " +
+          "because the fallback secret is public. Set SESSION_SECRET (e.g. `openssl rand -base64 32`)."
+      );
+    }
     console.warn(
       "[auth] SESSION_SECRET is not set — using an insecure development default. Set a real secret before deploying."
     );
     return "dev-insecure-session-secret-change-me";
+  }
+  if (secret.length < 32) {
+    console.warn("[auth] SESSION_SECRET is shorter than 32 characters — use `openssl rand -base64 32`.");
   }
   return secret;
 }
@@ -43,6 +54,10 @@ function fromBase64Url(b64url: string): Uint8Array {
 export interface SessionPayload {
   userId: string;
   role: "admin" | "customer";
+  /** The user's session version when this token was issued. Tokens carrying an
+   * older value than the account's current version are rejected, which is what
+   * invalidates sessions after a password change or reset. */
+  ver?: number;
   exp: number; // unix seconds
 }
 
@@ -73,9 +88,13 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
   }
 }
 
-export async function createSessionCookieValue(userId: string, role: "admin" | "customer") {
+export async function createSessionCookieValue(
+  userId: string,
+  role: "admin" | "customer",
+  sessionVersion = 1
+) {
   const exp = Math.floor(Date.now() / 1000) + MAX_AGE_SECONDS;
-  return signSession({ userId, role, exp });
+  return signSession({ userId, role, ver: sessionVersion, exp });
 }
 
 export { COOKIE_NAME, MAX_AGE_SECONDS };

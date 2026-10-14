@@ -1,3 +1,5 @@
+import { PRESS_EMAIL, published } from "@/lib/contact";
+
 export interface Faq {
   q: string;
   a: string;
@@ -18,7 +20,7 @@ export const FAQS: Faq[] = [
   { category: "Events & Tickets", q: "Can I get a refund for my ticket?", a: "Refunds are available up to 48 hours before an event. See our Terms & Conditions for full details.", widgetPriority: true },
   { category: "Events & Tickets", q: "Do you offer VIP or table reservations?", a: "Yes, most events include VIP and VVIP tiers with perks like priority entry and meet & greets — select these on the ticket page." },
   { category: "Collaborations", q: "How can I collaborate with BAE?", a: "We welcome collaborations with brands, artists and creatives. Reach out through our Contact page with your proposal." },
-  { category: "Collaborations", q: "Can I license music from BAE?", a: "Yes — for sync and licensing requests, contact press@bae.band with details on the intended use." },
-  { category: "Support", q: "How do I contact BAE for press or media inquiries?", a: "Email press@bae.band for interviews, press kits and media requests." },
+  { category: "Collaborations", q: "Can I license music from BAE?", a: `Yes — for sync and licensing requests, use the contact form with details on the intended use.${published(PRESS_EMAIL) ? ` You can also email ${PRESS_EMAIL}.` : ""}` },
+  { category: "Support", q: "How do I contact BAE for press or media inquiries?", a: `Use the contact form and select "Press".${published(PRESS_EMAIL) ? ` You can also email ${PRESS_EMAIL}.` : ""}` },
   { category: "Support", q: "How can I stay updated on BAE news and releases?", a: "Subscribe to our newsletter at the bottom of any page, or follow us on Instagram, X, YouTube, TikTok and Spotify." },
 ];
