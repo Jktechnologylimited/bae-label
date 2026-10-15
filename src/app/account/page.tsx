@@ -13,7 +13,11 @@ import LogoutButton from "@/components/auth/LogoutButton";
 import ChangePasswordForm from "./ChangePasswordForm";
 import RecoveryEmailForm from "./RecoveryEmailForm";
 
-export const metadata: Metadata = { title: "My Account" };
+export const metadata: Metadata = {
+  title: "My Account",
+  // Private or credential-bearing page: keep it out of search results.
+  robots: { index: false, follow: false },
+};
 
 export default async function AccountPage() {
   const user = await getCurrentUser();

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { ShieldCheck, Ticket as TicketIcon, Headphones } from "lucide-react";
 import TicketsClient from "./TicketsClient";
 import { CardGridSkeleton } from "@/components/ui/Skeleton";
@@ -8,10 +9,11 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import Accordion from "@/components/ui/Accordion";
 import { listEvents } from "@/lib/db/events";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Get Tickets",
   description: "Secure tickets to upcoming BAE shows and label showcases.",
-};
+  path: "/tickets",
+});
 
 const TRUST = [
   { icon: ShieldCheck, label: "Secure", sub: "Payments" },

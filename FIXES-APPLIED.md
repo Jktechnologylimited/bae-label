@@ -488,6 +488,73 @@ disputes and refunds on BAE's tickets land on JKTL, and customers see JKTL on th
 BAE holding its own Paystack account removes both problems, needs no split at all, and is a key swap rather than a
 rewrite. The subaccount is ready either way.
 
+---
+
+# Seventh pass — metadata/OG, and a reveal toggle on password fields
+
+## 1. Proper metadata and Open Graph
+
+Only the root layout declared Open Graph tags, so **every shared link — a release, a show, the FAQs — previewed with
+the homepage's title and description**, and there was no preview image at all.
+
+- **`src/lib/seo.ts`** — `pageMetadata({ title, description, path, noIndex })` produces per-page title, description,
+  canonical URL, Open Graph and Twitter (`summary_large_image`) tags in one call.
+- **Applied to all ten public pages**: about, artists, releases, events, tickets, news, culture, media, faqs, contact.
+  Verified: `/events` now serves `og:title="Events — BAE"` with its own description rather than the site-wide text.
+- **`public/og.png`** — a generated 1200×630 brand card (bold BAE wordmark, tagline, the label colour accents). There
+  was previously no `og:image` anywhere.
+- **Favicons** — `src/app/icon.png` (512×512) and `apple-icon.png` (180×180). There was no favicon before, so the
+  browser was requesting one that didn't exist.
+- **`src/app/robots.ts`** and **`src/app/sitemap.ts`** — new. All public routes are listed with sensible priority and
+  change frequency; admin, account, auth and verification paths are disallowed. `/ticket/*` is excluded because ticket
+  URLs are bearer credentials.
+- **`noindex` on every private page** — login, signup, forgot/reset password, account, order confirmation, ticket view,
+  verification, and the whole `/admin` segment (via its layout). `signup` is a client component and can't export
+  metadata, so it got a small `layout.tsx` to carry the tag.
+- **`metadataBase` now comes from `NEXT_PUBLIC_SITE_URL`** instead of a hardcoded `https://bae.band`, so canonical and
+  `og:image` URLs are absolute and correct on whatever domain it's deployed to.
+- **JSON-LD** (`MusicGroup`) added in the layout. `sameAs` is deliberately omitted: the social links in `nav.ts` point
+  at bare platform domains, and listing those as the organisation's profiles would send crawlers to the wrong place.
+
+## 2. Reveal what you're typing
+
+New `src/components/ui/PasswordInput.tsx` — an eye toggle with `aria-label`/`aria-pressed`, and a `tone` prop so it
+reads correctly on the dark auth pages and the white account forms. It replaced **every** password field:
+
+| Where | Fields |
+|---|---|
+| `/login` | password |
+| `/signup` | password |
+| `/reset-password` | new + confirm |
+| `/account` | current + new password |
+| `/account` (recovery email) | current password to confirm |
+
+`grep -rn 'type="password"' src/` now returns nothing — there is no raw password input left to miss. The toggle also
+sets `autoComplete` (`current-password` / `new-password`) so password managers behave.
+
+## Verified at runtime
+
+| Check | Result |
+|---|---|
+| `/og.png`, `/icon.png`, `/apple-icon.png` | 200, `image/png` |
+| Homepage tags | `og:title`, `og:description`, `og:image`, `twitter:card`, canonical, JSON-LD, icon links — all present |
+| Per-page OG | `/events` → "Events — BAE", `/releases` → "Releases — BAE", `/artists`, `/news`, `/tickets` all correct |
+| `/robots.txt` | serves the rules and the sitemap pointer |
+| `/sitemap.xml` | valid urlset with all 14 public routes |
+| `/login`, `/signup`, `/forgot-password`, `/reset-password` | `noindex, nofollow` |
+| `/admin`, `/admin/users`, `/admin/settings`, `/account` (logged in) | `noindex, nofollow` |
+| `/verify` | 307 → `/login` (middleware), and both paths are noindex/disallowed |
+| Login page | reveal button with `aria-label="Show password"` and `aria-pressed="false"` |
+
+`tsc`, `eslint` and `next build` all pass.
+
+## One thing to remember at deploy time
+
+`robots.txt`, `sitemap.xml` and every `og:` URL are built from **`NEXT_PUBLIC_SITE_URL`**. Locally they correctly say
+`http://localhost:3000`; if that variable isn't set to the real domain in Vercel, the deployed sitemap and social
+previews will advertise localhost.
+
+
 
 
 

@@ -11,7 +11,11 @@ import { CONTACT_EMAIL, published } from "@/lib/contact";
 import clsx from "clsx";
 import { LABEL_CLASSES, LABEL_SHORT } from "@/lib/labelStyle";
 
-export const metadata: Metadata = { title: "Your Ticket" };
+export const metadata: Metadata = {
+  title: "Your Ticket",
+  // Private or credential-bearing page: keep it out of search results.
+  robots: { index: false, follow: false },
+};
 
 export default async function TicketPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Link from "next/link";
 import { Globe2, Users, Music4, CalendarDays, Radio, ShieldCheck, Sparkles, Heart, TrendingUp } from "lucide-react";
 import PageHero from "@/components/sections/PageHero";
@@ -9,10 +10,11 @@ import { LABELS } from "@/lib/data";
 import { LABEL_CLASSES } from "@/lib/labelStyle";
 import clsx from "clsx";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "About",
-  description: "BAE is a movement built on culture, creativity and community — three labels, one vision.",
-};
+  description: "BAE is a movement built on culture, creativity and community \u2014 three labels, one vision.",
+  path: "/about",
+});
 
 const IMPACT = [
   { icon: Globe2, value: "3", label: "Labels", sub: "United under one vision" },

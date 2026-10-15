@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { Headphones, Mail, MapPin, Phone, Send, ArrowRight, LucideIcon } from "lucide-react";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import Accordion from "@/components/ui/Accordion";
@@ -6,10 +7,11 @@ import Placeholder from "@/components/ui/Placeholder";
 import ContactForm from "./ContactForm";
 import { CONTACT_EMAIL, PRESS_EMAIL, SUBMISSIONS_EMAIL, published } from "@/lib/contact";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Contact Us",
-  description: "Get in touch with the BAE team — questions, collaborations, partnerships and more.",
-};
+  description: "Get in touch with the BAE team \u2014 questions, collaborations, partnerships and more.",
+  path: "/contact",
+});
 
 interface ReachItem {
   icon: LucideIcon;

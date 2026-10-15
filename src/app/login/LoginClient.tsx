@@ -8,6 +8,7 @@ import BaeMark from "@/components/brand/BaeMark";
 import GoogleButton from "@/components/auth/GoogleButton";
 import { oauthErrorMessage } from "@/lib/auth/oauthErrors";
 import { safeNextPath } from "@/lib/navigation";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 export default function LoginClient() {
   const router = useRouter();
@@ -85,11 +86,13 @@ export default function LoginClient() {
                 Forgot password?
               </Link>
             </div>
-            <input
-              type="password"
+            <PasswordInput
+              tone="dark"
               required
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={setPassword}
+              autoComplete="current-password"
+              ariaLabel="Password"
               className="mt-1.5 w-full border border-line bg-transparent px-4 py-3 text-sm text-paper placeholder:text-muted focus:outline-none focus:border-gold"
               placeholder="••••••••"
             />

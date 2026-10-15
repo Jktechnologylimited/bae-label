@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Loader2, UserPlus } from "lucide-react";
 import BaeMark from "@/components/brand/BaeMark";
 import GoogleButton from "@/components/auth/GoogleButton";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -78,12 +79,14 @@ export default function SignupPage() {
           </label>
           <label className="block">
             <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">Password</span>
-            <input
-              type="password"
+            <PasswordInput
+              tone="dark"
               required
               minLength={8}
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={setPassword}
+              autoComplete="new-password"
+              ariaLabel="Password"
               className="mt-1.5 w-full border border-line bg-transparent px-4 py-3 text-sm text-paper placeholder:text-muted focus:outline-none focus:border-gold"
               placeholder="At least 8 characters"
             />

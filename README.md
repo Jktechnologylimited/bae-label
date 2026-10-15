@@ -435,6 +435,23 @@ grants access to `/admin`) — there's no lighter-weight "door staff" role. If y
 without also being able to edit events/pricing, that'd be a good next role to add (see `Role` in
 `src/lib/db/schema.ts`).
 
+## SEO, social previews and icons
+
+- Every public page sets its own title, description, canonical URL and Open Graph/Twitter tags via
+  `pageMetadata()` in `src/lib/seo.ts`. Add it to any new page — without it, a page inherits the site-wide tags and
+  shared links preview with the homepage's text.
+- **`public/og.png`** is the 1200×630 image shown when a link is shared on WhatsApp, X, Facebook, LinkedIn or Slack.
+  It's a generated brand card — replace the file (keeping the 1200×630 size) whenever you want a new one.
+- Favicons are `src/app/icon.png` (512×512) and `src/app/apple-icon.png` (180×180); Next serves them and injects the
+  `<link>` tags automatically.
+- `src/app/robots.ts` and `src/app/sitemap.ts` are generated from `NEXT_PUBLIC_SITE_URL`, so **the URLs inside them
+  are only correct once that variable is set to your real domain** — otherwise they advertise `localhost`.
+- Admin, account, auth, verification and ticket pages are all `noindex` and disallowed in `robots.txt`. Ticket URLs
+  are bearer credentials, so `/ticket/*` is excluded in both places.
+- Structured data (JSON-LD) for the organisation is emitted from `src/app/layout.tsx`. It deliberately omits `sameAs`
+  because the social links in `src/lib/nav.ts` point at bare platform domains rather than real profiles — add the real
+  profile URLs there and to the JSON-LD once they exist.
+
 ## Design notes
 
 - Color tokens, font variables and a couple of custom utilities (`.bg-grain`, `.text-stroke`) are defined once in

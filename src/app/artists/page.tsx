@@ -1,15 +1,17 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import ArtistsClient from "./ArtistsClient";
 import { CardGridSkeleton } from "@/components/ui/Skeleton";
 import PageHero from "@/components/sections/PageHero";
 import LabelStrip from "@/components/sections/LabelStrip";
 import { listArtists } from "@/lib/db/artists";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Artists",
   description: "Meet the artists of BigDripUniverse, AG20 and ElmayanaConcept.",
-};
+  path: "/artists",
+});
 
 export default async function ArtistsPage() {
   const artists = await listArtists();

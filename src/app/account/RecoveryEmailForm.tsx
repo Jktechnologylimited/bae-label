@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Loader2, Check } from "lucide-react";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 /**
  * Lets a signed-in account point password-reset emails at a different mailbox
@@ -49,13 +50,14 @@ export default function RecoveryEmailForm({ current }: { current: string }) {
         aria-label="Recovery email address"
         className="w-full border border-black/15 bg-white px-4 py-3 text-sm focus:outline-none focus:border-ink"
       />
-      <input
-        type="password"
+      <PasswordInput
+        tone="light"
         required
         value={currentPassword}
-        onChange={(e) => setCurrentPassword(e.target.value)}
+        onChange={setCurrentPassword}
         placeholder="Your current password, to confirm"
-        aria-label="Current password, to confirm this change"
+        ariaLabel="Current password, to confirm this change"
+        autoComplete="current-password"
         className="w-full border border-black/15 bg-white px-4 py-3 text-sm focus:outline-none focus:border-ink"
       />
       {error && <p className="text-xs font-medium text-bigdrip">{error}</p>}

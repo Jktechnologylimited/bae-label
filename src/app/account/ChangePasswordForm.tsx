@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Loader2, Check } from "lucide-react";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 export default function ChangePasswordForm() {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -32,23 +33,25 @@ export default function ChangePasswordForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <input
-        type="password"
+      <PasswordInput
+        tone="light"
         required
         value={currentPassword}
-        onChange={(e) => setCurrentPassword(e.target.value)}
+        onChange={setCurrentPassword}
         placeholder="Current password"
-        aria-label="Current password"
+        ariaLabel="Current password"
+        autoComplete="current-password"
         className="w-full border border-black/15 bg-white px-4 py-3 text-sm focus:outline-none focus:border-ink"
       />
-      <input
-        type="password"
+      <PasswordInput
+        tone="light"
         required
         minLength={8}
         value={newPassword}
-        onChange={(e) => setNewPassword(e.target.value)}
+        onChange={setNewPassword}
         placeholder="New password (min 8 characters)"
-        aria-label="New password (minimum 8 characters)"
+        ariaLabel="New password (minimum 8 characters)"
+        autoComplete="new-password"
         className="w-full border border-black/15 bg-white px-4 py-3 text-sm focus:outline-none focus:border-ink"
       />
       {error && <p className="text-xs font-medium text-bigdrip">{error}</p>}

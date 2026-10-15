@@ -7,7 +7,11 @@ import { formatNaira } from "@/lib/data";
 import { getEvent } from "@/lib/db/events";
 import Button from "@/components/ui/Button";
 
-export const metadata: Metadata = { title: "Order Confirmation" };
+export const metadata: Metadata = {
+  title: "Order Confirmation",
+  // Private or credential-bearing page: keep it out of search results.
+  robots: { index: false, follow: false },
+};
 
 export default async function ConfirmPage({
   searchParams,

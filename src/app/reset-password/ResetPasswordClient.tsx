@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Loader2, KeyRound } from "lucide-react";
 import BaeMark from "@/components/brand/BaeMark";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 export default function ResetPasswordClient() {
   const router = useRouter();
@@ -69,23 +70,27 @@ export default function ResetPasswordClient() {
         <form onSubmit={handleSubmit} className="mt-8 space-y-4 border border-line bg-ink-soft p-6">
           <label className="block">
             <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">New Password</span>
-            <input
-              type="password"
+            <PasswordInput
+              tone="dark"
               required
               minLength={8}
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={setPassword}
+              autoComplete="new-password"
+              ariaLabel="New password"
               className="mt-1.5 w-full border border-line bg-transparent px-4 py-3 text-sm text-paper placeholder:text-muted focus:outline-none focus:border-gold"
               placeholder="At least 8 characters"
             />
           </label>
           <label className="block">
             <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">Confirm Password</span>
-            <input
-              type="password"
+            <PasswordInput
+              tone="dark"
               required
               value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
+              onChange={setConfirm}
+              autoComplete="new-password"
+              ariaLabel="Confirm password"
               className="mt-1.5 w-full border border-line bg-transparent px-4 py-3 text-sm text-paper placeholder:text-muted focus:outline-none focus:border-gold"
             />
           </label>
