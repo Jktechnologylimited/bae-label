@@ -42,6 +42,10 @@ export function pageMetadata({
       title: ogTitle,
       description,
       url: path,
+      // Must be repeated here: a page's `openGraph` object does NOT inherit
+      // missing keys from the root layout's, so omitting this drops og:locale
+      // from every sub-page (it only showed on the homepage).
+      locale: "en_NG",
       images: [OG_IMAGE_META],
     },
     twitter: {

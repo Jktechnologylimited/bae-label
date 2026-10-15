@@ -554,6 +554,18 @@ sets `autoComplete` (`current-password` / `new-password`) so password managers b
 `http://localhost:3000`; if that variable isn't set to the real domain in Vercel, the deployed sitemap and social
 previews will advertise localhost.
 
+### Correction after re-checking the rendered output
+
+Dumping every rendered `<meta>` tag (rather than grepping for presence) caught one thing the first pass missed:
+**`og:locale` was on the homepage and missing from all ten sub-pages.** Next.js does not inherit keys a page's
+`openGraph` object omits from the root layout's, so `pageMetadata()` had been silently dropping it. Added to
+`pageMetadata()` and re-verified across all eleven pages.
+
+Everything else checked out as claimed: `og:title`/`og:description`/`og:url`/`og:site_name`/`og:type`,
+`og:image` with `width`/`height`/`alt`, `twitter:card`/`title`/`description`/`image`, canonical, and both icon links —
+on every page, with per-page values.
+
+
 
 
 
